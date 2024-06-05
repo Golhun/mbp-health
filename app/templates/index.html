@@ -1,0 +1,12 @@
+{% extends "layout.html" %} {% block content %}
+<nav class="flex justify-between items-center py-4">
+	<div class="text-2xl font-bold mbp-dark">Health Dashboard</div>
+	<div>
+		<a href="{{ url_for('auth.sign_in') }}" class="text-blue-500">Sign In</a>
+	</div>
+</nav>
+<div class="text-center mt-10">
+	<h1 class="text-5xl font-bold mb-6">Welcome to the Health Dashboard</h1>
+	<p class="text-xl text-gray-700">Your health management made easy</p>
+</div>
+{% endblock %}

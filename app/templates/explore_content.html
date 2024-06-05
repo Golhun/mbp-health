@@ -1,0 +1,178 @@
+<div class="flex flex-col min-h-screen">
+	<!-- Top Bar -->
+	<div class="flex justify-between items-center p-4 bg-white">
+		<h1 class="text-4xl font-bold">Explore</h1>
+		<div class="flex items-center space-x-4">
+			<a href="#" class="relative">
+				<img
+					src="{{ url_for('static', filename='uploads/' ~ current_user.profile_picture) }}"
+					alt="Profile Picture"
+					class="w-10 h-10 rounded-full"
+					loading="lazy"
+				/>
+				<span
+					class="absolute top-0 right-0 inline-block w-2 h-2 bg-red-500 rounded-full"
+				></span>
+			</a>
+			<a href="#" class="text-gray-700">
+				<i class="fas fa-bell"></i>
+			</a>
+		</div>
+	</div>
+
+	<!-- Main Content -->
+	<div class="flex-1 p-4 space-y-4">
+		<!-- Vitals Card -->
+		<div class="bg-white rounded-2xl p-4">
+			<h2 class="text-xl font-bold mb-2">Vitals</h2>
+			<ul class="space-y-2">
+				<li
+					class="flex justify-between items-center py-2 border-b border-gray-200"
+				>
+					<a
+						href="#"
+						id="bp-link"
+						class="flex justify-between items-center w-full"
+					>
+						<div class="flex items-center space-x-2">
+							<i class="fas fa-heartbeat text-red-500"></i>
+							<span>Blood Pressure</span>
+						</div>
+						<i class="fas fa-chevron-right text-gray-400"></i>
+					</a>
+				</li>
+				<li
+					class="flex justify-between items-center py-2 border-b border-gray-200"
+				>
+					<a
+						href="#"
+						id="hr-link"
+						class="flex justify-between items-center w-full"
+					>
+						<div class="flex items-center space-x-2">
+							<i class="fas fa-heart text-blue-500"></i>
+							<span>Heart Rate</span>
+						</div>
+						<i class="fas fa-chevron-right text-gray-400"></i>
+					</a>
+				</li>
+				<li
+					class="flex justify-between items-center py-2 border-b border-gray-200"
+				>
+					<a
+						href="#"
+						id="glucose-link"
+						class="flex justify-between items-center w-full"
+					>
+						<div class="flex items-center space-x-2">
+							<i class="fas fa-tint text-green-500"></i>
+							<span>Glucose</span>
+						</div>
+						<i class="fas fa-chevron-right text-gray-400"></i>
+					</a>
+				</li>
+				<li
+					class="flex justify-between items-center py-2 border-b border-gray-200"
+				>
+					<a
+						href="#"
+						id="cholesterol-link"
+						class="flex justify-between items-center w-full"
+					>
+						<div class="flex items-center space-x-2">
+							<i class="fas fa-vial text-yellow-500"></i>
+							<span>Cholesterol</span>
+						</div>
+						<i class="fas fa-chevron-right text-gray-400"></i>
+					</a>
+				</li>
+				<li class="flex justify-between items-center py-2" id="menstrual-link">
+					<div class="flex items-center space-x-2">
+						<i class="fas fa-calendar-alt text-purple-500"></i>
+						<a href="#">Menstrual Cycle</a>
+					</div>
+					<i class="fas fa-chevron-right text-gray-400"></i>
+				</li>
+			</ul>
+		</div>
+
+		<!-- Medical Info Card -->
+		<div class="bg-white rounded-2xl p-4">
+			<h2 class="text-xl font-bold mb-2">Medical Info</h2>
+			<ul class="space-y-2">
+				<li class="flex justify-between items-center py-2">
+					<div class="flex items-center space-x-2">
+						<i class="fas fa-notes-medical text-blue-500"></i>
+						<span>Underlying Condition</span>
+					</div>
+					<i class="fas fa-chevron-right text-gray-400"></i>
+				</li>
+			</ul>
+		</div>
+
+		<!-- Treatment Card (Only for Staff) -->
+		{% if current_user.role_A == 'Staff' %}
+		<div class="bg-white rounded-2xl p-4">
+			<h2 class="text-xl font-bold mb-2">Treatment</h2>
+			<ul class="space-y-2">
+				<li
+					class="flex justify-between items-center py-2 border-b border-gray-200"
+				>
+					<div class="flex items-center space-x-2">
+						<i class="fas fa-user-md text-blue-500"></i>
+						<span>Clients</span>
+					</div>
+					<i class="fas fa-chevron-right text-gray-400"></i>
+				</li>
+				<li class="flex justify-between items-center py-2">
+					<div class="flex items-center space-x-2">
+						<i class="fas fa-book-medical text-green-500"></i>
+						<span>Guidelines</span>
+					</div>
+					<i class="fas fa-chevron-right text-gray-400"></i>
+				</li>
+			</ul>
+		</div>
+		{% endif %}
+
+		<!-- Manage Card (Only for Admin) -->
+		{% if current_user.role_C == 'Admin' %}
+		<div class="bg-white rounded-2xl p-4">
+			<h2 class="text-xl font-bold mb-2">Manage</h2>
+			<ul class="space-y-2">
+				<li
+					class="flex justify-between items-center py-2 border-b border-gray-200"
+				>
+					<div class="flex items-center space-x-2">
+						<i class="fas fa-users text-blue-500"></i>
+						<span>Clients</span>
+					</div>
+					<i class="fas fa-chevron-right text-gray-400"></i>
+				</li>
+				<li class="flex justify-between items-center py-2">
+					<div class="flex items-center space-x-2">
+						<i class="fas fa-user-cog text-green-500"></i>
+						<span>Staff</span>
+					</div>
+					<i class="fas fa-chevron-right text-gray-400"></i>
+				</li>
+			</ul>
+		</div>
+		{% endif %}
+
+		<!-- Logout Card (Only for Mobile) -->
+		<div class="bg-white rounded-2xl p-4 lg:hidden">
+			<ul class="space-y-2">
+				<li class="flex justify-between items-center py-2">
+					<a
+						href="{{ url_for('auth.sign_out') }}"
+						class="text-red-600 flex items-center space-x-2"
+					>
+						<i class="fas fa-sign-out-alt"></i>
+						<span>Logout</span>
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>

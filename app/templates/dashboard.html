@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Dashboard</title>
+		<link
+			href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.css"
+			rel="stylesheet"
+		/>
+		<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.js"></script>
+		<style>
+			.popup-message {
+				position: fixed;
+				top: 10%;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 50;
+				padding: 10px 20px;
+				border-radius: 8px;
+				background-color: #48bb78; /* Tailwind's green-500 */
+				color: white;
+				display: none;
+				opacity: 0;
+				transition: opacity 0.5s ease;
+			}
+			.popup-message.error {
+				background-color: #f56565; /* Tailwind's red-500 */
+			}
+			.popup-message.show {
+				display: block;
+				opacity: 1;
+			}
+			.flatpickr-day.period {
+				background-color: #f56565; /* Tailwind's red-500 */
+				color: white;
+			}
+			.flatpickr-day.ovulation {
+				background-color: #48bb78; /* Tailwind's green-500 */
+				color: white;
+			}
+			.flatpickr-day.fertile {
+				background-color: #ffeb3b; /* Tailwind's yellow-500 */
+				color: black;
+			}
+		</style>
+	</head>
+	<body class="flex h-screen bg-gray-100">
+		<div class="flex flex-col md:flex-row w-full">
+			<!-- Sidebar -->
+			<nav
+				class="bg-white md:w-16 w-full md:h-full h-16 fixed md:fixed bottom-0 md:bottom-auto flex md:flex-col md:justify-between shadow-lg"
+			>
+				<div
+					class="flex md:flex-col items-center mobile-centered md:mt-4 space-x-4 md:space-x-0 md:space-y-4 w-full"
+				>
+					<div
+						class="flex flex-col items-center sidebar-icon p-2"
+						id="summary-tab"
+						data-tab="summary"
+					>
+						<i class="far fa-heart text-gray-600 text-lg md:text-2xl"></i>
+						<span class="icon-label text-gray-600 text-xs md:text-base"
+							>Summary</span
+						>
+					</div>
+					<div
+						class="flex flex-col items-center sidebar-icon p-2"
+						id="profile-tab"
+						data-tab="profile"
+					>
+						<i class="far fa-user text-gray-600 text-lg md:text-2xl"></i>
+						<span class="icon-label text-gray-600 text-xs md:text-base"
+							>Profile</span
+						>
+					</div>
+					<div
+						class="flex flex-col items-center sidebar-icon p-2"
+						id="explore-tab"
+						data-tab="explore"
+					>
+						<i class="far fa-compass text-gray-600 text-lg md:text-2xl"></i>
+						<span class="icon-label text-gray-600 text-xs md:text-base"
+							>Explore</span
+						>
+					</div>
+				</div>
+				<div
+					class="md:mb-4 flex md:flex-col items-center justify-around md:justify-end space-x-4 md:space-x-0 md:space-y-4 logout-icon"
+				>
+					<div
+						class="flex flex-col items-center sidebar-icon p-2"
+						id="logout-tab"
+						onclick="location.href='{{ url_for('auth.sign_out') }}'"
+					>
+						<i
+							class="far fa-sign-out-alt text-gray-600 text-lg md:text-2xl"
+						></i>
+						<span class="icon-label text-gray-600 text-xs md:text-base"
+							>Logout</span
+						>
+					</div>
+				</div>
+			</nav>
+
+			<!-- Main Content -->
+			<main class="flex-1 p-4 md:ml-16" id="main-content">
+				<!-- Initial content will be loaded here -->
+			</main>
+		</div>
+
+		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				const icons = document.querySelectorAll(".sidebar-icon");
+
+				function loadContent(tabId, callback) {
+					let url = `/${tabId}`;
+					if (tabId === "explore") {
+						url = "{{ url_for('main.explore_content') }}";
+					} else if (tabId === "heart_rate") {
+						url = "{{ url_for('main.heart_rate') }}";
+					} else if (tabId === "cholesterol") {
+						url = "{{ url_for('main.cholesterol') }}";
+					} else if (tabId === "glucose") {
+						url = "{{ url_for('main.glucose') }}";
+					}
+					fetch(url)
+						.then((response) => response.text())
+						.then((html) => {
+							document.getElementById("main-content").innerHTML = html;
+							if (tabId === "explore") {
+								setupExplorePage();
+							}
+							if (callback) callback(tabId);
+							if (tabId === "blood_pressure") {
+								setupBloodPressurePage();
+							}
+						})
+						.catch((error) => console.warn("Error loading content:", error));
+				}
+
+				function activateTab(tabId, shouldLoadContent = true) {
+					localStorage.setItem("activeTab", tabId);
+
+					if (shouldLoadContent) {
+						loadContent(tabId, setActiveIcon);
+					} else {
+						setActiveIcon(tabId);
+					}
+				}
+
+				function setActiveIcon(tabId) {
+					icons.forEach((i) => {
+						const iconLabel = i.querySelector(".icon-label");
+						const icon = i.querySelector("i");
+						const iconClass = icon.className.split(" ")[1];
+						if (iconLabel) {
+							iconLabel.classList.remove("active");
+							iconLabel.style.color = "#6b7280";
+						}
+						if (icon) {
+							icon.className = `far ${iconClass}`;
+							icon.style.color = "#6b7280";
+						}
+					});
+
+					const activeIcon = document.querySelector(`#${tabId}-tab`);
+					if (activeIcon) {
+						const activeLabel = activeIcon.querySelector(".icon-label");
+						const activeIconElement = activeIcon.querySelector("i");
+						const iconClass = activeIconElement.className.split(" ")[1];
+						if (activeLabel) {
+							activeLabel.classList.add("active");
+							activeLabel.style.color = "#b91c1c";
+						}
+						if (activeIconElement) {
+							activeIconElement.className = `fas ${iconClass}`;
+							activeIconElement.style.color = "#b91c1c";
+						}
+					}
+				}
+
+				function setupExplorePage() {
+					document
+						.getElementById("bp-link")
+						.addEventListener("click", function (event) {
+							event.preventDefault();
+							loadContent("blood_pressure", () => setActiveIcon("explore"));
+						});
+
+					document
+						.getElementById("hr-link")
+						.addEventListener("click", function (event) {
+							event.preventDefault();
+							loadContent("heart_rate", () => setActiveIcon("explore"));
+						});
+
+					document
+						.getElementById("cholesterol-link")
+						.addEventListener("click", function (event) {
+							event.preventDefault();
+							loadContent("cholesterol", () => setActiveIcon("explore"));
+						});
+
+					document
+						.getElementById("glucose-link")
+						.addEventListener("click", function (event) {
+							event.preventDefault();
+							loadContent("glucose", () => setActiveIcon("explore"));
+						});
+				}
+
+				icons.forEach((icon) => {
+					icon.addEventListener("click", function () {
+						const tabId = this.getAttribute("data-tab");
+						activateTab(tabId);
+					});
+				});
+
+				const activeTab = localStorage.getItem("activeTab") || "explore";
+				activateTab(activeTab, false);
+				loadContent(activeTab, setActiveIcon);
+
+				function setupBloodPressurePage() {
+					console.log("Setting up Blood Pressure Page");
+
+					const addDataButton = document.getElementById("addDataButton");
+					const addDataModal = document.getElementById("addDataModal");
+					const closeModalButton = document.getElementById("closeModalButton");
+					const closeModalButtonTop = document.getElementById(
+						"closeModalButtonTop"
+					);
+					const addDataForm = document.getElementById("addDataForm");
+					const formMessage = document.getElementById("formMessage");
+					const formErrorMessage = document.getElementById("formErrorMessage");
+					const dayViewButton = document.getElementById("dayView");
+					const weekViewButton = document.getElementById("weekView");
+					const monthViewButton = document.getElementById("monthView");
+
+					let bpChart;
+
+					if (addDataButton) {
+						addDataButton.addEventListener("click", function () {
+							console.log("Add Data button clicked");
+							addDataModal.classList.remove("hidden");
+							console.log("Modal should be visible now");
+						});
+					} else {
+						console.error("Add Data button not found");
+					}
+
+					if (closeModalButton) {
+						closeModalButton.addEventListener("click", function () {
+							console.log("Close button clicked");
+							addDataModal.classList.add("hidden");
+						});
+					} else {
+						console.error("Close button not found");
+					}
+
+					if (closeModalButtonTop) {
+						closeModalButtonTop.addEventListener("click", function () {
+							console.log("Close button (top) clicked");
+							addDataModal.classList.add("hidden");
+						});
+					} else {
+						console.error("Close button (top) not found");
+					}
+
+					if (addDataForm) {
+						addDataForm.addEventListener("submit", function (event) {
+							event.preventDefault();
+							console.log("Form submitted");
+							const formData = new FormData(addDataForm);
+
+							fetch(addDataForm.action, {
+								method: "POST",
+								body: formData,
+							})
+								.then((response) => response.json())
+								.then((data) => {
+									if (data.success) {
+										console.log("Data added successfully");
+										formMessage.classList.remove("hidden");
+										formErrorMessage.classList.add("hidden");
+										formMessage.textContent = "Data added successfully!";
+										setTimeout(() => {
+											formMessage.classList.add("hidden");
+											addDataModal.classList.add("hidden");
+											fetchData("day");
+										}, 2000);
+									} else {
+										console.log("Error adding data");
+										formErrorMessage.classList.remove("hidden");
+										formMessage.classList.add("hidden");
+										formErrorMessage.textContent = "Error adding data!";
+									}
+								})
+								.catch((error) => {
+									console.log("Error:", error);
+									formErrorMessage.classList.remove("hidden");
+									formMessage.classList.add("hidden");
+									formErrorMessage.textContent = "Error adding data!";
+								});
+						});
+					} else {
+						console.error("Add Data form not found");
+					}
+
+					function fetchData(view) {
+						console.log("Fetching data for view:", view);
+						fetch(`{{ url_for('main.blood_pressure_data') }}?view=${view}`)
+							.then((response) => response.json())
+							.then((data) => {
+								console.log("Data fetched:", data);
+								updateChart(data);
+							})
+							.catch((error) => console.error("Error fetching data:", error));
+					}
+
+					function updateChart(data) {
+						console.log("Updating chart with data:", data);
+						const ctx = document.getElementById("bpChart").getContext("2d");
+						if (bpChart) {
+							bpChart.destroy();
+						}
+						bpChart = new Chart(ctx, {
+							type: "line",
+							data: {
+								datasets: [
+									{
+										label: "Systolic",
+										data: data.map((entry) => ({
+											x: moment(entry.timestamp),
+											y: entry.systolic,
+										})),
+										borderColor: "rgb(255, 99, 132)",
+										fill: false,
+									},
+									{
+										label: "Diastolic",
+										data: data.map((entry) => ({
+											x: moment(entry.timestamp),
+											y: entry.diastolic,
+										})),
+										borderColor: "rgb(54, 162, 235)",
+										fill: false,
+									},
+								],
+							},
+							options: {
+								scales: {
+									x: {
+										type: "time",
+										time: {
+											unit: "day",
+										},
+									},
+									y: {
+										beginAtZero: false,
+									},
+								},
+							},
+						});
+					}
+
+					if (dayViewButton) {
+						dayViewButton.addEventListener("click", () => fetchData("day"));
+					} else {
+						console.error("Day view button not found");
+					}
+
+					if (weekViewButton) {
+						weekViewButton.addEventListener("click", () => fetchData("week"));
+					} else {
+						console.error("Week view button not found");
+					}
+
+					if (monthViewButton) {
+						monthViewButton.addEventListener("click", () => fetchData("month"));
+					} else {
+						console.error("Month view button not found");
+					}
+
+					fetchData("day");
+				}
+			});
+		</script>
+	</body>
+</html>

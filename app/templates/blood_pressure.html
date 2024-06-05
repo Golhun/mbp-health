@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Blood Pressure</title>
+		<link
+			href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.css"
+			rel="stylesheet"
+		/>
+		<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+		<style>
+			.popup-message {
+				position: fixed;
+				top: 10%;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 50;
+				padding: 10px 20px;
+				border-radius: 8px;
+				background-color: #48bb78;
+				color: white;
+				display: none;
+				opacity: 0;
+				transition: opacity 0.5s ease;
+			}
+			.popup-message.error {
+				background-color: #f56565;
+			}
+			.popup-message.show {
+				display: block;
+				opacity: 1;
+			}
+		</style>
+	</head>
+	<body class="flex h-screen bg-gray-100">
+		<div class="flex flex-col items-center w-full">
+			<div class="w-full max-w-4xl mx-auto bg-white p-6 rounded-lg">
+				<div class="flex justify-between items-center mb-4">
+					<a
+						href="{{ url_for('main.load_dashboard') }}"
+						id="back-button"
+						class="text-blue-500 flex items-center"
+					>
+						<i class="fas fa-arrow-left text-lg md:text-2xl"></i>
+						<span class="ml-1">Back</span>
+					</a>
+					<div class="flex items-center space-x-4">
+						<a href="#" class="relative">
+							<img
+								src="{{ url_for('static', filename='uploads/' ~ current_user.profile_picture) }}"
+								alt="Profile Picture"
+								class="w-10 h-10 rounded-full"
+								loading="lazy"
+							/>
+							<span
+								class="absolute top-0 right-0 inline-block w-2 h-2 bg-red-500 rounded-full"
+							></span>
+						</a>
+						<a href="#" class="text-gray-700"><i class="fas fa-bell"></i></a>
+					</div>
+				</div>
+				<h1 class="text-2xl font-bold mb-4">Blood Pressure</h1>
+				<button
+					id="addDataButton"
+					class="text-green-500 flex items-center mb-4 ml-auto"
+				>
+					<i class="fas fa-plus-circle text-lg md:text-2xl"></i>
+					<span class="ml-1">ADD DATA</span>
+				</button>
+				<div class="mb-4">
+					<div class="flex justify-end space-x-4 mb-2">
+						<button
+							id="dayView"
+							class="bg-blue-500 text-white px-2 py-1 rounded"
+						>
+							Days
+						</button>
+						<button
+							id="weekView"
+							class="bg-blue-500 text-white px-2 py-1 rounded"
+						>
+							Weeks
+						</button>
+						<button
+							id="monthView"
+							class="bg-blue-500 text-white px-2 py-1 rounded"
+						>
+							Months
+						</button>
+					</div>
+					<canvas id="bpChart"></canvas>
+				</div>
+			</div>
+			<div class="bg-white p-4 rounded-lg shadow-md mt-6 w-full max-w-4xl">
+				<h2 class="text-xl font-bold mb-2">About Blood Pressure</h2>
+				<p>
+					Blood pressure is the pressure of blood pushing against the walls of
+					your arteries. It’s normal for your blood pressure to rise and fall
+					throughout the day. However, if it stays high for a long time, it can
+					damage your heart and lead to health problems. Tracking your blood
+					pressure regularly helps you monitor your health and take preventive
+					measures if needed.
+				</p>
+			</div>
+		</div>
+
+		<!-- Add Data Modal -->
+		<div
+			id="addDataModal"
+			class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden"
+		>
+			<div class="bg-white p-6 rounded-lg shadow-lg w-11/12 md:w-1/3 relative">
+				<button
+					id="closeModalButtonTop"
+					class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+				>
+					<i class="fas fa-times"></i>
+				</button>
+				<h2 class="text-xl font-bold mb-4">Add Blood Pressure Data</h2>
+				<form
+					id="addDataForm"
+					method="POST"
+					action="{{ url_for('main.blood_pressure') }}"
+				>
+					{{ form.hidden_tag() }}
+					<div class="mb-4">
+						{{ form.systolic.label(class="block text-gray-700 text-sm font-bold
+						mb-2") }} {{ form.systolic(class="shadow appearance-none border
+						rounded w-full py-2 px-3 text-gray-700 leading-tight
+						focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.diastolic.label(class="block text-gray-700 text-sm font-bold
+						mb-2") }} {{ form.diastolic(class="shadow appearance-none border
+						rounded w-full py-2 px-3 text-gray-700 leading-tight
+						focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div id="formMessage" class="text-green-500 mb-4 hidden">
+						Data added successfully!
+					</div>
+					<div id="formErrorMessage" class="text-red-500 mb-4 hidden">
+						Error adding data!
+					</div>
+					<div class="flex items-center justify-between">
+						<button
+							class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+							type="submit"
+						>
+							Add Data
+						</button>
+						<button
+							type="button"
+							id="closeModalButton"
+							class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+						>
+							Cancel
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</body>
+</html>

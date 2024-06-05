@@ -1,0 +1,54 @@
+.profile-picture {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.notification-icon {
+    position: relative;
+}
+
+.notification-icon::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    space-x-2;
+    padding: 1rem;
+    color: white;
+    text-decoration: none;
+}
+
+.sidebar a:hover {
+    background-color: #4a5568;
+}
+
+.sidebar a span {
+    margin-left: 0.5rem;
+}
+
+.image-container {
+    height: 60vh; /* Adjust as necessary */
+    border-radius: 0.5rem;
+}
+
+.sidebar-icon .icon-label {
+    font-size: 0.75rem; /* Adjust label size */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .image-container {
+        height: 40vh; /* Adjust for smaller screens */
+    }
+}

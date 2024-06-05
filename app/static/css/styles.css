@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.sidebar-icon {
+	transition: transform 0.2s, color 0.2s;
+	padding: 1rem; /* Increase padding for better spacing */
+}
+.sidebar-icon:hover {
+	transform: scale(1.2);
+}
+.icon-label {
+	transition: color 0.2s;
+	font-size: 0.75rem; /* small label text */
+	margin-top: 0.25rem; /* small space between icon and label */
+}
+.active {
+	color: #1d4ed8; /* Tailwind's blue-700 */
+}
+.tab-content {
+	display: none;
+}
+.tab-content.active {
+	display: block;
+}
+@media (max-width: 768px) {
+	.logout-icon {
+		display: none;
+	}
+	.mobile-centered {
+		justify-content: space-evenly;
+	}
+	.sidebar-icon {
+		font-size: 2rem; /* Increased icon size for mobile */
+	}
+	.icon-label {
+		font-size: 0.85rem; /* slightly larger label text for mobile */
+	}
+}

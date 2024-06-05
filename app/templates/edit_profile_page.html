@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Edit Profile</title>
+		<link
+			href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+			rel="stylesheet"
+		/>
+	</head>
+	<body class="bg-gray-100">
+		<div class="min-h-screen flex flex-col justify-center items-center">
+			<div class="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6">
+				<h1 class="text-2xl font-semibold mb-6">Edit Profile</h1>
+				<form
+					id="editProfileForm"
+					method="POST"
+					action="{{ url_for('main.edit_profile') }}"
+				>
+					{{ form.hidden_tag() }} {{ form.email() }}
+					<!-- Hidden email field -->
+					<div class="mb-4">
+						{{ form.first_name.label(class="block text-gray-700 text-sm
+						font-bold mb-2") }} {{ form.first_name(class="shadow appearance-none
+						border rounded w-full py-2 px-3 text-gray-700 leading-tight
+						focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.last_name.label(class="block text-gray-700 text-sm font-bold
+						mb-2") }} {{ form.last_name(class="shadow appearance-none border
+						rounded w-full py-2 px-3 text-gray-700 leading-tight
+						focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.date_of_birth.label(class="block text-gray-700 text-sm
+						font-bold mb-2") }} {{ form.date_of_birth(class="shadow
+						appearance-none border rounded w-full py-2 px-3 text-gray-700
+						leading-tight focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.height.label(class="block text-gray-700 text-sm font-bold
+						mb-2") }} {{ form.height(class="shadow appearance-none border
+						rounded w-full py-2 px-3 text-gray-700 leading-tight
+						focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.weight.label(class="block text-gray-700 text-sm font-bold
+						mb-2") }} {{ form.weight(class="shadow appearance-none border
+						rounded w-full py-2 px-3 text-gray-700 leading-tight
+						focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.medications.label(class="block text-gray-700 text-sm
+						font-bold mb-2") }} {{ form.medications(class="shadow
+						appearance-none border rounded w-full py-2 px-3 text-gray-700
+						leading-tight focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.allergies.label(class="block text-gray-700 text-sm font-bold
+						mb-2") }} {{ form.allergies(class="shadow appearance-none border
+						rounded w-full py-2 px-3 text-gray-700 leading-tight
+						focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.old_password.label(class="block text-gray-700 text-sm
+						font-bold mb-2") }} {{ form.old_password(class="shadow
+						appearance-none border rounded w-full py-2 px-3 text-gray-700
+						leading-tight focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="mb-4">
+						{{ form.new_password.label(class="block text-gray-700 text-sm
+						font-bold mb-2") }} {{ form.new_password(class="shadow
+						appearance-none border rounded w-full py-2 px-3 text-gray-700
+						leading-tight focus:outline-none focus:shadow-outline") }} {{
+						form.confirm_password.label(class="block text-gray-700 text-sm
+						font-bold mb-2 mt-2") }} {{ form.confirm_password(class="shadow
+						appearance-none border rounded w-full py-2 px-3 text-gray-700
+						leading-tight focus:outline-none focus:shadow-outline") }}
+					</div>
+					<div class="flex items-center justify-between mt-4">
+						<button
+							class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+							type="submit"
+						>
+							Save Changes
+						</button>
+					</div>
+				</form>
+				<form
+					id="uploadProfilePictureForm"
+					method="POST"
+					action="{{ url_for('main.upload_profile_picture') }}"
+					enctype="multipart/form-data"
+					class="mt-4"
+				>
+					{{ form.hidden_tag() }}
+					<label
+						class="block text-gray-700 text-sm font-bold mb-2"
+						for="profile_picture"
+					>
+						Change Profile Picture
+					</label>
+					<input
+						type="file"
+						name="profile_picture"
+						id="profile_picture"
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+					/>
+					<button
+						class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-2"
+						type="submit"
+					>
+						Upload
+					</button>
+				</form>
+			</div>
+		</div>
+		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				const oldPasswordInput = document.getElementById("form_old_password");
+				const newPasswordInput = document.getElementById("form_new_password");
+				const confirmPasswordInput = document.getElementById(
+					"form_confirm_password"
+				);
+
+				oldPasswordInput.addEventListener("input", function () {
+					const isOldPasswordFilled = oldPasswordInput.value.trim().length > 0;
+					newPasswordInput.disabled = !isOldPasswordFilled;
+					confirmPasswordInput.disabled = !isOldPasswordFilled;
+				});
+			});
+		</script>
+	</body>
+</html>

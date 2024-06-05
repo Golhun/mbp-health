@@ -1,0 +1,38 @@
+{% extends "layout.html" %} {% block content %}
+<div class="flex justify-center items-center h-screen">
+	<div class="bg-white p-8 rounded-lg shadow-lg w-1/3">
+		<h2 class="text-2xl font-bold mb-6 mbp-dark">
+			Edit Roles for {{ user.first_name }} {{ user.last_name }}
+		</h2>
+		<form
+			method="POST"
+			action="{{ url_for('admin.edit_role', user_id=user.id) }}"
+		>
+			{{ form.hidden_tag() }}
+			<div class="mb-4">
+				<label for="role_B" class="block text-gray-700">Role B</label>
+				<input
+					type="text"
+					id="role_B"
+					name="role_B"
+					value="{{ user.role_B }}"
+					class="border border-gray-300 p-2 w-full"
+				/>
+			</div>
+			<div class="mb-4">
+				<label for="role_C" class="block text-gray-700">Role C</label>
+				<input
+					type="text"
+					id="role_C"
+					name="role_C"
+					value="{{ user.role_C }}"
+					class="border border-gray-300 p-2 w-full"
+				/>
+			</div>
+			<button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
+				Update
+			</button>
+		</form>
+	</div>
+</div>
+{% endblock %}

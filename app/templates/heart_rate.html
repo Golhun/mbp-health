@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Heart Rate</title>
+		<link
+			href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+			rel="stylesheet"
+		/>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+		<style>
+			.popup-message {
+				position: fixed;
+				top: 10%;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 50;
+				padding: 10px 20px;
+				border-radius: 8px;
+				background-color: #48bb78; /* Tailwind's green-500 */
+				color: white;
+				display: none;
+				opacity: 0;
+				transition: opacity 0.5s ease;
+			}
+			.popup-message.error {
+				background-color: #f56565; /* Tailwind's red-500 */
+			}
+			.popup-message.show {
+				display: block;
+				opacity: 1;
+			}
+		</style>
+	</head>
+	<body class="flex h-screen bg-gray-100">
+		<div class="flex flex-col w-full">
+			<!-- Main Content -->
+			<main class="flex-1 p-4">
+				<div class="min-h-screen flex flex-col items-center">
+					<div class="w-full max-w-4xl mx-auto bg-white p-6 rounded-lg">
+						<div class="flex justify-between items-center mb-4">
+							<a
+								href="{{ url_for('main.load_dashboard') }}"
+								id="back-button"
+								class="text-blue-500 flex items-center"
+							>
+								<i class="fas fa-arrow-left text-lg md:text-2xl"></i>
+								<span class="ml-1">Back</span>
+							</a>
+							<div class="flex items-center space-x-4">
+								<a href="#" class="relative">
+									<img
+										src="{{ url_for('static', filename='uploads/' ~ current_user.profile_picture) }}"
+										alt="Profile Picture"
+										class="w-10 h-10 rounded-full"
+										loading="lazy"
+									/>
+									<span
+										class="absolute top-0 right-0 inline-block w-2 h-2 bg-red-500 rounded-full"
+									></span>
+								</a>
+								<a href="#" class="text-gray-700"
+									><i class="fas fa-bell"></i
+								></a>
+							</div>
+						</div>
+						<h1 class="text-2xl font-bold mb-4">Heart Rate</h1>
+						<button
+							id="addDataButton"
+							class="text-green-500 flex items-center mb-4 ml-auto"
+						>
+							<i class="fas fa-plus-circle text-lg md:text-2xl"></i
+							><span class="ml-1">ADD DATA</span>
+						</button>
+						<div class="mb-4">
+							<div class="flex justify-end space-x-4 mb-2">
+								<button
+									id="dayView"
+									class="bg-blue-500 text-white px-2 py-1 rounded"
+								>
+									Days
+								</button>
+								<button
+									id="weekView"
+									class="bg-blue-500 text-white px-2 py-1 rounded"
+								>
+									Weeks
+								</button>
+								<button
+									id="monthView"
+									class="bg-blue-500 text-white px-2 py-1 rounded"
+								>
+									Months
+								</button>
+							</div>
+							<canvas id="hrChart"></canvas>
+						</div>
+					</div>
+					<div class="bg-white p-4 rounded-lg shadow-md mt-6 w-full max-w-4xl">
+						<h2 class="text-xl font-bold mb-2">About Heart Rate</h2>
+						<p>
+							Heart rate is the number of times your heart beats per minute.
+							Monitoring your heart rate can help you track your fitness level,
+							spot potential health issues, and gauge the effectiveness of your
+							fitness regimen. Regularly tracking your heart rate can provide
+							valuable insights into your cardiovascular health.
+						</p>
+					</div>
+				</div>
+				<!-- Add Data Modal -->
+				<div
+					id="addDataModal"
+					class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden"
+				>
+					<div
+						class="bg-white p-6 rounded-lg shadow-lg w-11/12 md:w-1/3 relative"
+					>
+						<button
+							id="closeModalButtonTop"
+							class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+						>
+							<i class="fas fa-times"></i>
+						</button>
+						<h2 class="text-xl font-bold mb-4">Add Heart Rate Data</h2>
+						<form
+							id="addDataForm"
+							method="POST"
+							action="{{ url_for('main.heart_rate') }}"
+						>
+							{{ form.hidden_tag() }}
+							<div class="mb-4">
+								{{ form.heart_rate.label(class="block text-gray-700 text-sm
+								font-bold mb-2") }} {{ form.heart_rate(class="shadow
+								appearance-none border rounded w-full py-2 px-3 text-gray-700
+								leading-tight focus:outline-none focus:shadow-outline") }}
+							</div>
+							<div id="formMessage" class="text-green-500 mb-4 hidden">
+								Data added successfully!
+							</div>
+							<div id="formErrorMessage" class="text-red-500 mb-4 hidden">
+								Error adding data!
+							</div>
+							<div class="flex items-center justify-between">
+								<button
+									class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+									type="submit"
+								>
+									Add Data
+								</button>
+								<button
+									type="button"
+									id="closeModalButton"
+									class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+								>
+									Cancel
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</main>
+		</div>
+		<div id="popupMessage" class="popup-message"></div>
+		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				const addDataButton = document.getElementById("addDataButton");
+				const addDataModal = document.getElementById("addDataModal");
+				const closeModalButton = document.getElementById("closeModalButton");
+				const closeModalButtonTop = document.getElementById(
+					"closeModalButtonTop"
+				);
+				const addDataForm = document.getElementById("addDataForm");
+				const formMessage = document.getElementById("formMessage");
+				const formErrorMessage = document.getElementById("formErrorMessage");
+				const dayViewButton = document.getElementById("dayView");
+				const weekViewButton = document.getElementById("weekView");
+				const monthViewButton = document.getElementById("monthView");
+
+				let hrChart;
+
+				const closeModal = () => {
+					addDataModal.classList.add("hidden");
+				};
+
+				const showMessage = (message, isSuccess = true) => {
+					const messageContainer = document.getElementById("popupMessage");
+					messageContainer.textContent = message;
+					messageContainer.classList.remove("error");
+					if (!isSuccess) {
+						messageContainer.classList.add("error");
+					}
+					messageContainer.classList.add("show");
+
+					setTimeout(() => {
+						messageContainer.classList.remove("show");
+					}, 3000);
+				};
+
+				addDataButton.addEventListener("click", function () {
+					addDataModal.classList.remove("hidden");
+				});
+
+				closeModalButton.addEventListener("click", closeModal);
+				closeModalButtonTop.addEventListener("click", closeModal);
+
+				addDataForm.addEventListener("submit", function (event) {
+					event.preventDefault();
+					const formData = new FormData(addDataForm);
+
+					fetch(addDataForm.action, {
+						method: "POST",
+						body: formData,
+					})
+						.then((response) => response.json())
+						.then((data) => {
+							if (data.success) {
+								showMessage("Data added successfully!", true);
+								addDataForm.reset(); // Clear form after successful submission
+							} else {
+								showMessage("Error adding data!", false);
+							}
+						})
+						.catch((error) => {
+							showMessage("Error adding data!", false);
+							console.error("Error:", error);
+						});
+				});
+
+				const fetchData = (view) => {
+					fetch(`{{ url_for('main.heart_rate_data') }}?view=${view}`)
+						.then((response) => response.json())
+						.then((data) => {
+							console.log("Data fetched for view:", view, data); // Debugging
+							updateChart(data);
+						})
+						.catch((error) => console.error("Error fetching data:", error));
+				};
+
+				const updateChart = (data) => {
+					const ctx = document.getElementById("hrChart").getContext("2d");
+					if (hrChart) {
+						hrChart.destroy();
+					}
+					hrChart = new Chart(ctx, {
+						type: "line",
+						data: {
+							datasets: [
+								{
+									label: "Heart Rate",
+									data: data.map((entry) => ({
+										x: moment(entry.timestamp),
+										y: entry.heart_rate,
+									})),
+									borderColor: "rgb(255, 99, 132)",
+									fill: false,
+								},
+							],
+						},
+						options: {
+							scales: {
+								x: {
+									type: "time",
+									time: {
+										unit: "day",
+									},
+								},
+								y: {
+									beginAtZero: false,
+								},
+							},
+						},
+					});
+				};
+
+				dayViewButton.addEventListener("click", () => fetchData("day"));
+				weekViewButton.addEventListener("click", () => fetchData("week"));
+				monthViewButton.addEventListener("click", () => fetchData("month"));
+
+				// Initialize the chart with the default view
+				fetchData("day");
+			});
+		</script>
+	</body>
+</html>
