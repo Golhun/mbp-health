@@ -9,8 +9,8 @@ from app.models import User, BloodPressure, Cholesterol, HeartRate, Glucose
 from werkzeug.security import generate_password_hash
 from PIL import Image
 from datetime import datetime, timedelta
-from app.forms import HeartRateForm
-from app.models import HeartRate
+from flask import jsonify
+
 
 @main.route('/')
 def index():
@@ -285,10 +285,7 @@ def glucose_data():
     glucose_data_formatted = [{'timestamp': g.timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'glucose_level': g.glucose_level} for g in glucose_data]
     return jsonify(glucose_data_formatted)
 
-
-
 @main.route('/load_dashboard')
 @login_required
 def load_dashboard():
     return render_template('dashboard.html')
-

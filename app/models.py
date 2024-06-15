@@ -2,7 +2,7 @@ from itsdangerous import URLSafeTimedSerializer as Serializer
 from app import db, login_manager
 from flask_login import UserMixin
 from flask import current_app
-from datetime import datetime
+from datetime import datetime, timedelta
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -50,20 +50,17 @@ class BloodPressure(db.Model):
     def __repr__(self):
         return f'<BloodPressure {self.systolic}/{self.diastolic} - {self.timestamp}>'
 
-
 class HeartRate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     heart_rate = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-
 class Cholesterol(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     cholesterol_level = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 class Glucose(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,4 +70,3 @@ class Glucose(db.Model):
 
     def __repr__(self):
         return f"<Glucose {self.glucose_level}>"
-
