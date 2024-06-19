@@ -111,159 +111,291 @@
 		</div>
 
 		<script>
-			document.addEventListener("DOMContentLoaded", function () {
-				const icons = document.querySelectorAll(".sidebar-icon");
+			const icons = document.querySelectorAll(".sidebar-icon");
 
-				function loadContent(tabId, callback) {
-					let url = `/${tabId}`;
-					if (tabId === "explore") {
-						url = "{{ url_for('main.explore_content') }}";
-					} else if (tabId === "heart_rate") {
-						url = "{{ url_for('main.heart_rate') }}";
-					} else if (tabId === "cholesterol") {
-						url = "{{ url_for('main.cholesterol') }}";
-					} else if (tabId === "glucose") {
-						url = "{{ url_for('main.glucose') }}";
+			function loadContent(tabId, callback) {
+				let url = `/${tabId}`;
+				if (tabId === "explore") {
+					url = "{{ url_for('main.explore_content') }}";
+				} else if (tabId === "heart_rate") {
+					url = "{{ url_for('main.heart_rate') }}";
+				} else if (tabId === "cholesterol") {
+					url = "{{ url_for('main.cholesterol') }}";
+				} else if (tabId === "glucose") {
+					url = "{{ url_for('main.glucose') }}";
+				}
+				fetch(url)
+					.then((response) => response.text())
+					.then((html) => {
+						document.getElementById("main-content").innerHTML = html;
+						if (tabId === "explore") {
+							setupExplorePage();
+							addCholestrol();
+						}
+
+						if (tabId === "summary") {
+							summaryPage();
+						}
+
+						if (callback) callback(tabId);
+						if (tabId === "blood_pressure") {
+							setupBloodPressurePage();
+						}
+						if (tabId === "heart_rate") {
+							setupHeartRatePage();
+						}
+						if (tabId === "glucose") {
+							setupGlucosePage();
+						}
+						if (tabId === "cholesterol") {
+							setupCholesterolPage();
+						}
+					})
+					.catch((error) => console.warn("Error loading content:", error));
+			}
+
+			function activateTab(tabId, shouldLoadContent = true) {
+				localStorage.setItem("activeTab", tabId);
+
+				if (shouldLoadContent) {
+					loadContent(tabId, setActiveIcon);
+				} else {
+					setActiveIcon(tabId);
+				}
+			}
+
+			function setActiveIcon(tabId) {
+				icons.forEach((i) => {
+					const iconLabel = i.querySelector(".icon-label");
+					const icon = i.querySelector("i");
+					const iconClass = icon.className.split(" ")[1];
+					if (iconLabel) {
+						iconLabel.classList.remove("active");
+						iconLabel.style.color = "#6b7280";
 					}
-					fetch(url)
-						.then((response) => response.text())
-						.then((html) => {
-							document.getElementById("main-content").innerHTML = html;
-							if (tabId === "explore") {
-								setupExplorePage();
-							}
-							if (callback) callback(tabId);
-							if (tabId === "blood_pressure") {
-								setupBloodPressurePage();
-							}
-							if (tabId === "heart_rate") {
-								setupHeartRatePage();
-							}
-							if (tabId === "glucose") {
-								setupGlucosePage();
-							}
-							if (tabId === "cholesterol") {
-								setupCholesterolPage();
+					if (icon) {
+						icon.className = `far ${iconClass}`;
+						icon.style.color = "#6b7280";
+					}
+				});
+
+				const activeIcon = document.querySelector(`#${tabId}-tab`);
+				if (activeIcon) {
+					const activeLabel = activeIcon.querySelector(".icon-label");
+					const activeIconElement = activeIcon.querySelector("i");
+					const iconClass = activeIconElement.className.split(" ")[1];
+					if (activeLabel) {
+						activeLabel.classList.add("active");
+						activeLabel.style.color = "#b91c1c";
+					}
+					if (activeIconElement) {
+						activeIconElement.className = `fas ${iconClass}`;
+						activeIconElement.style.color = "#b91c1c";
+					}
+				}
+			}
+
+			function setupExplorePage() {
+				document
+					.getElementById("bp-link")
+					.addEventListener("click", function (event) {
+						event.preventDefault();
+						loadContent("blood_pressure", () => setActiveIcon("explore"));
+					});
+
+				document
+					.getElementById("hr-link")
+					.addEventListener("click", function (event) {
+						event.preventDefault();
+						loadContent("heart_rate", () => setActiveIcon("explore"));
+					});
+
+				document
+					.getElementById("cholesterol-link")
+					.addEventListener("click", function (event) {
+						event.preventDefault();
+						loadContent("cholesterol", () => setActiveIcon("explore"));
+					});
+
+				document
+					.getElementById("glucose-link")
+					.addEventListener("click", function (event) {
+						event.preventDefault();
+						loadContent("glucose", () => setActiveIcon("explore"));
+					});
+			}
+
+			function setupCholesterolPage() {
+				console.log("Setting up Cholesterol Page");
+
+				const addDataButton = document.getElementById("addDataButton");
+				const addDataModal = document.getElementById("addDataModal");
+				const closeModalButton = document.getElementById("closeModalButton");
+				const closeModalButtonTop = document.getElementById(
+					"closeModalButtonTop"
+				);
+				const addDataForm = document.getElementById("addDataForm");
+				const formMessage = document.getElementById("formMessage");
+				const formErrorMessage = document.getElementById("formErrorMessage");
+				const dayViewButton = document.getElementById("dayView");
+				const weekViewButton = document.getElementById("weekView");
+				const monthViewButton = document.getElementById("monthView");
+
+				let cholesterolChart;
+
+				const closeModal = () => {
+					addDataModal.classList.add("hidden");
+				};
+
+				const showMessage = (message, isSuccess = true) => {
+					const messageContainer = document.createElement("div");
+					messageContainer.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg ${
+						isSuccess ? "bg-green-500 text-white" : "bg-red-500 text-white"
+					}`;
+					messageContainer.textContent = message;
+					document.body.appendChild(messageContainer);
+
+					setTimeout(() => {
+						messageContainer.remove();
+					}, 3000);
+				};
+
+				addDataButton.addEventListener("click", function () {
+					addDataModal.classList.remove("hidden");
+				});
+
+				closeModalButton.addEventListener("click", closeModal);
+				closeModalButtonTop.addEventListener("click", closeModal);
+
+				addDataForm.addEventListener("submit", function (event) {
+					event.preventDefault();
+					const formData = new FormData(addDataForm);
+
+					fetch(addDataForm.action, {
+						method: "POST",
+						body: formData,
+					})
+						.then((response) => response.json())
+						.then((data) => {
+							if (data.success) {
+								showMessage("Data added successfully!", true);
+								fetchData("day");
+							} else {
+								showMessage("Error adding data!", false);
 							}
 						})
-						.catch((error) => console.warn("Error loading content:", error));
-				}
+						.catch((error) => {
+							showMessage("Error adding data!", false);
+							console.error("Error:", error);
+						});
+				});
 
-				function activateTab(tabId, shouldLoadContent = true) {
-					localStorage.setItem("activeTab", tabId);
+				const fetchData = (view) => {
+					fetch(`{{ url_for('main.cholesterol_data') }}?view=${view}`)
+						.then((response) => response.json())
+						.then((data) => {
+							console.log("Data fetched for view:", view, data); // Debugging
+							updateChart(data);
+						})
+						.catch((error) => console.error("Error fetching data:", error));
+				};
 
-					if (shouldLoadContent) {
-						loadContent(tabId, setActiveIcon);
-					} else {
-						setActiveIcon(tabId);
+				const updateChart = (data) => {
+					const ctx = document
+						.getElementById("cholesterolChart")
+						.getContext("2d");
+					if (cholesterolChart) {
+						cholesterolChart.destroy();
 					}
-				}
-
-				function setActiveIcon(tabId) {
-					icons.forEach((i) => {
-						const iconLabel = i.querySelector(".icon-label");
-						const icon = i.querySelector("i");
-						const iconClass = icon.className.split(" ")[1];
-						if (iconLabel) {
-							iconLabel.classList.remove("active");
-							iconLabel.style.color = "#6b7280";
-						}
-						if (icon) {
-							icon.className = `far ${iconClass}`;
-							icon.style.color = "#6b7280";
-						}
+					cholesterolChart = new Chart(ctx, {
+						type: "line",
+						data: {
+							datasets: [
+								{
+									label: "Cholesterol Level",
+									data: data.map((entry) => ({
+										x: moment(entry.timestamp),
+										y: entry.cholesterol_level,
+									})),
+									borderColor: "rgb(255, 99, 132)",
+									fill: false,
+								},
+							],
+						},
+						options: {
+							scales: {
+								x: {
+									type: "time",
+									time: {
+										unit: "day",
+									},
+								},
+								y: {
+									beginAtZero: false,
+								},
+							},
+						},
 					});
+				};
 
-					const activeIcon = document.querySelector(`#${tabId}-tab`);
-					if (activeIcon) {
-						const activeLabel = activeIcon.querySelector(".icon-label");
-						const activeIconElement = activeIcon.querySelector("i");
-						const iconClass = activeIconElement.className.split(" ")[1];
-						if (activeLabel) {
-							activeLabel.classList.add("active");
-							activeLabel.style.color = "#b91c1c";
-						}
-						if (activeIconElement) {
-							activeIconElement.className = `fas ${iconClass}`;
-							activeIconElement.style.color = "#b91c1c";
-						}
-					}
-				}
+				dayViewButton.addEventListener("click", () => fetchData("day"));
+				weekViewButton.addEventListener("click", () => fetchData("week"));
+				monthViewButton.addEventListener("click", () => fetchData("month"));
 
-				function setupExplorePage() {
-					document
-						.getElementById("bp-link")
-						.addEventListener("click", function (event) {
-							event.preventDefault();
-							loadContent("blood_pressure", () => setActiveIcon("explore"));
-						});
+				// Initialize the chart with the default view
+				fetchData("day");
+			}
 
-					document
-						.getElementById("hr-link")
-						.addEventListener("click", function (event) {
-							event.preventDefault();
-							loadContent("heart_rate", () => setActiveIcon("explore"));
-						});
+			function setupBloodPressurePage() {
+				console.log("Setting up Blood Pressure Page");
 
-					document
-						.getElementById("cholesterol-link")
-						.addEventListener("click", function (event) {
-							event.preventDefault();
-							loadContent("cholesterol", () => setActiveIcon("explore"));
-						});
+				const addDataButton = document.getElementById("addDataButton");
+				const addDataModal = document.getElementById("addDataModal");
+				const closeModalButton = document.getElementById("closeModalButton");
+				const closeModalButtonTop = document.getElementById(
+					"closeModalButtonTop"
+				);
+				const addDataForm = document.getElementById("addDataForm");
+				const formMessage = document.getElementById("formMessage");
+				const formErrorMessage = document.getElementById("formErrorMessage");
+				const dayViewButton = document.getElementById("dayView");
+				const weekViewButton = document.getElementById("weekView");
+				const monthViewButton = document.getElementById("monthView");
 
-					document
-						.getElementById("glucose-link")
-						.addEventListener("click", function (event) {
-							event.preventDefault();
-							loadContent("glucose", () => setActiveIcon("explore"));
-						});
-				}
+				let bpChart;
 
-				function setupCholesterolPage() {
-					console.log("Setting up Cholesterol Page");
-
-					const addDataButton = document.getElementById("addDataButton");
-					const addDataModal = document.getElementById("addDataModal");
-					const closeModalButton = document.getElementById("closeModalButton");
-					const closeModalButtonTop = document.getElementById(
-						"closeModalButtonTop"
-					);
-					const addDataForm = document.getElementById("addDataForm");
-					const formMessage = document.getElementById("formMessage");
-					const formErrorMessage = document.getElementById("formErrorMessage");
-					const dayViewButton = document.getElementById("dayView");
-					const weekViewButton = document.getElementById("weekView");
-					const monthViewButton = document.getElementById("monthView");
-
-					let cholesterolChart;
-
-					const closeModal = () => {
-						addDataModal.classList.add("hidden");
-					};
-
-					const showMessage = (message, isSuccess = true) => {
-						const messageContainer = document.createElement("div");
-						messageContainer.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg ${
-							isSuccess ? "bg-green-500 text-white" : "bg-red-500 text-white"
-						}`;
-						messageContainer.textContent = message;
-						document.body.appendChild(messageContainer);
-
-						setTimeout(() => {
-							messageContainer.remove();
-						}, 3000);
-					};
-
+				if (addDataButton) {
 					addDataButton.addEventListener("click", function () {
+						console.log("Add Data button clicked");
 						addDataModal.classList.remove("hidden");
+						console.log("Modal should be visible now");
 					});
+				} else {
+					console.error("Add Data button not found");
+				}
 
-					closeModalButton.addEventListener("click", closeModal);
-					closeModalButtonTop.addEventListener("click", closeModal);
+				if (closeModalButton) {
+					closeModalButton.addEventListener("click", function () {
+						console.log("Close button clicked");
+						addDataModal.classList.add("hidden");
+					});
+				} else {
+					console.error("Close button not found");
+				}
 
+				if (closeModalButtonTop) {
+					closeModalButtonTop.addEventListener("click", function () {
+						console.log("Close button (top) clicked");
+						addDataModal.classList.add("hidden");
+					});
+				} else {
+					console.error("Close button (top) not found");
+				}
+
+				if (addDataForm) {
 					addDataForm.addEventListener("submit", function (event) {
 						event.preventDefault();
+						console.log("Form submitted");
 						const formData = new FormData(addDataForm);
 
 						fetch(addDataForm.action, {
@@ -273,561 +405,662 @@
 							.then((response) => response.json())
 							.then((data) => {
 								if (data.success) {
-									showMessage("Data added successfully!", true);
-									fetchData("day");
+									console.log("Data added successfully");
+									formMessage.classList.remove("hidden");
+									formErrorMessage.classList.add("hidden");
+									formMessage.textContent = "Data added successfully!";
+									setTimeout(() => {
+										formMessage.classList.add("hidden");
+										addDataModal.classList.add("hidden");
+										fetchData("day");
+									}, 2000);
 								} else {
-									showMessage("Error adding data!", false);
+									console.log("Error adding data");
+									formErrorMessage.classList.remove("hidden");
+									formMessage.classList.add("hidden");
+									formErrorMessage.textContent = "Error adding data!";
 								}
 							})
 							.catch((error) => {
-								showMessage("Error adding data!", false);
-								console.error("Error:", error);
+								console.log("Error:", error);
+								formErrorMessage.classList.remove("hidden");
+								formMessage.classList.add("hidden");
+								formErrorMessage.textContent = "Error adding data!";
 							});
 					});
+				} else {
+					console.error("Add Data form not found");
+				}
 
-					const fetchData = (view) => {
-						fetch(`{{ url_for('main.cholesterol_data') }}?view=${view}`)
-							.then((response) => response.json())
-							.then((data) => {
-								console.log("Data fetched for view:", view, data); // Debugging
-								updateChart(data);
-							})
-							.catch((error) => console.error("Error fetching data:", error));
-					};
+				function fetchData(view) {
+					console.log("Fetching data for view:", view);
+					fetch(`{{ url_for('main.blood_pressure_data') }}?view=${view}`)
+						.then((response) => response.json())
+						.then((data) => {
+							console.log("Data fetched:", data);
+							updateChart(data);
+						})
+						.catch((error) => console.error("Error fetching data:", error));
+				}
 
-					const updateChart = (data) => {
-						const ctx = document
-							.getElementById("cholesterolChart")
-							.getContext("2d");
-						if (cholesterolChart) {
-							cholesterolChart.destroy();
-						}
-						cholesterolChart = new Chart(ctx, {
-							type: "line",
-							data: {
-								datasets: [
-									{
-										label: "Cholesterol Level",
-										data: data.map((entry) => ({
-											x: moment(entry.timestamp),
-											y: entry.cholesterol_level,
-										})),
-										borderColor: "rgb(255, 99, 132)",
-										fill: false,
-									},
-								],
-							},
-							options: {
-								scales: {
-									x: {
-										type: "time",
-										time: {
-											unit: "day",
-										},
-									},
-									y: {
-										beginAtZero: false,
+				function updateChart(data) {
+					console.log("Updating chart with data:", data);
+					const ctx = document.getElementById("bpChart").getContext("2d");
+					if (bpChart) {
+						bpChart.destroy();
+					}
+					bpChart = new Chart(ctx, {
+						type: "line",
+						data: {
+							datasets: [
+								{
+									label: "Systolic",
+									data: data.map((entry) => ({
+										x: moment(entry.timestamp),
+										y: entry.systolic,
+									})),
+									borderColor: "rgb(255, 99, 132)",
+									fill: false,
+								},
+								{
+									label: "Diastolic",
+									data: data.map((entry) => ({
+										x: moment(entry.timestamp),
+										y: entry.diastolic,
+									})),
+									borderColor: "rgb(54, 162, 235)",
+									fill: false,
+								},
+							],
+						},
+						options: {
+							scales: {
+								x: {
+									type: "time",
+									time: {
+										unit: "day",
 									},
 								},
+								y: {
+									beginAtZero: false,
+								},
 							},
-						});
-					};
+						},
+					});
+				}
 
+				if (dayViewButton) {
 					dayViewButton.addEventListener("click", () => fetchData("day"));
+				} else {
+					console.error("Day view button not found");
+				}
+
+				if (weekViewButton) {
 					weekViewButton.addEventListener("click", () => fetchData("week"));
+				} else {
+					console.error("Week view button not found");
+				}
+
+				if (monthViewButton) {
 					monthViewButton.addEventListener("click", () => fetchData("month"));
-
-					// Initialize the chart with the default view
-					fetchData("day");
+				} else {
+					console.error("Month view button not found");
 				}
 
-				function setupBloodPressurePage() {
-					console.log("Setting up Blood Pressure Page");
+				fetchData("day");
+			}
 
-					const addDataButton = document.getElementById("addDataButton");
-					const addDataModal = document.getElementById("addDataModal");
-					const closeModalButton = document.getElementById("closeModalButton");
-					const closeModalButtonTop = document.getElementById(
-						"closeModalButtonTop"
-					);
-					const addDataForm = document.getElementById("addDataForm");
-					const formMessage = document.getElementById("formMessage");
-					const formErrorMessage = document.getElementById("formErrorMessage");
-					const dayViewButton = document.getElementById("dayView");
-					const weekViewButton = document.getElementById("weekView");
-					const monthViewButton = document.getElementById("monthView");
+			function setupHeartRatePage() {
+				console.log("Setting up Heart Rate Page");
 
-					let bpChart;
+				const addDataButton = document.getElementById("addDataButton");
+				const addDataModal = document.getElementById("addDataModal");
+				const closeModalButton = document.getElementById("closeModalButton");
+				const closeModalButtonTop = document.getElementById(
+					"closeModalButtonTop"
+				);
+				const addDataForm = document.getElementById("addDataForm");
+				const formMessage = document.getElementById("formMessage");
+				const formErrorMessage = document.getElementById("formErrorMessage");
+				const dayViewButton = document.getElementById("dayView");
+				const weekViewButton = document.getElementById("weekView");
+				const monthViewButton = document.getElementById("monthView");
 
-					if (addDataButton) {
-						addDataButton.addEventListener("click", function () {
-							console.log("Add Data button clicked");
-							addDataModal.classList.remove("hidden");
-							console.log("Modal should be visible now");
-						});
-					} else {
-						console.error("Add Data button not found");
-					}
+				let hrChart;
 
-					if (closeModalButton) {
-						closeModalButton.addEventListener("click", function () {
-							console.log("Close button clicked");
-							addDataModal.classList.add("hidden");
-						});
-					} else {
-						console.error("Close button not found");
-					}
+				if (addDataButton) {
+					addDataButton.addEventListener("click", function () {
+						console.log("Add Data button clicked");
+						addDataModal.classList.remove("hidden");
+						console.log("Modal should be visible now");
+					});
+				} else {
+					console.error("Add Data button not found");
+				}
 
-					if (closeModalButtonTop) {
-						closeModalButtonTop.addEventListener("click", function () {
-							console.log("Close button (top) clicked");
-							addDataModal.classList.add("hidden");
-						});
-					} else {
-						console.error("Close button (top) not found");
-					}
+				if (closeModalButton) {
+					closeModalButton.addEventListener("click", function () {
+						console.log("Close button clicked");
+						addDataModal.classList.add("hidden");
+					});
+				} else {
+					console.error("Close button not found");
+				}
 
-					if (addDataForm) {
-						addDataForm.addEventListener("submit", function (event) {
-							event.preventDefault();
-							console.log("Form submitted");
-							const formData = new FormData(addDataForm);
+				if (closeModalButtonTop) {
+					closeModalButtonTop.addEventListener("click", function () {
+						console.log("Close button (top) clicked");
+						addDataModal.classList.add("hidden");
+					});
+				} else {
+					console.error("Close button (top) not found");
+				}
 
-							fetch(addDataForm.action, {
-								method: "POST",
-								body: formData,
-							})
-								.then((response) => response.json())
-								.then((data) => {
-									if (data.success) {
-										console.log("Data added successfully");
-										formMessage.classList.remove("hidden");
-										formErrorMessage.classList.add("hidden");
-										formMessage.textContent = "Data added successfully!";
-										setTimeout(() => {
-											formMessage.classList.add("hidden");
-											addDataModal.classList.add("hidden");
-											fetchData("day");
-										}, 2000);
-									} else {
-										console.log("Error adding data");
-										formErrorMessage.classList.remove("hidden");
+				if (addDataForm) {
+					addDataForm.addEventListener("submit", function (event) {
+						event.preventDefault();
+						console.log("Form submitted");
+						const formData = new FormData(addDataForm);
+
+						fetch(addDataForm.action, {
+							method: "POST",
+							body: formData,
+						})
+							.then((response) => response.json())
+							.then((data) => {
+								if (data.success) {
+									console.log("Data added successfully");
+									formMessage.classList.remove("hidden");
+									formErrorMessage.classList.add("hidden");
+									formMessage.textContent = "Data added successfully!";
+									setTimeout(() => {
 										formMessage.classList.add("hidden");
-										formErrorMessage.textContent = "Error adding data!";
-									}
-								})
-								.catch((error) => {
-									console.log("Error:", error);
+										addDataModal.classList.add("hidden");
+										fetchData("day");
+									}, 2000);
+								} else {
+									console.log("Error adding data");
 									formErrorMessage.classList.remove("hidden");
 									formMessage.classList.add("hidden");
 									formErrorMessage.textContent = "Error adding data!";
-								});
-						});
-					} else {
-						console.error("Add Data form not found");
-					}
-
-					function fetchData(view) {
-						console.log("Fetching data for view:", view);
-						fetch(`{{ url_for('main.blood_pressure_data') }}?view=${view}`)
-							.then((response) => response.json())
-							.then((data) => {
-								console.log("Data fetched:", data);
-								updateChart(data);
+								}
 							})
-							.catch((error) => console.error("Error fetching data:", error));
-					}
-
-					function updateChart(data) {
-						console.log("Updating chart with data:", data);
-						const ctx = document.getElementById("bpChart").getContext("2d");
-						if (bpChart) {
-							bpChart.destroy();
-						}
-						bpChart = new Chart(ctx, {
-							type: "line",
-							data: {
-								datasets: [
-									{
-										label: "Systolic",
-										data: data.map((entry) => ({
-											x: moment(entry.timestamp),
-											y: entry.systolic,
-										})),
-										borderColor: "rgb(255, 99, 132)",
-										fill: false,
-									},
-									{
-										label: "Diastolic",
-										data: data.map((entry) => ({
-											x: moment(entry.timestamp),
-											y: entry.diastolic,
-										})),
-										borderColor: "rgb(54, 162, 235)",
-										fill: false,
-									},
-								],
-							},
-							options: {
-								scales: {
-									x: {
-										type: "time",
-										time: {
-											unit: "day",
-										},
-									},
-									y: {
-										beginAtZero: false,
-									},
-								},
-							},
-						});
-					}
-
-					if (dayViewButton) {
-						dayViewButton.addEventListener("click", () => fetchData("day"));
-					} else {
-						console.error("Day view button not found");
-					}
-
-					if (weekViewButton) {
-						weekViewButton.addEventListener("click", () => fetchData("week"));
-					} else {
-						console.error("Week view button not found");
-					}
-
-					if (monthViewButton) {
-						monthViewButton.addEventListener("click", () => fetchData("month"));
-					} else {
-						console.error("Month view button not found");
-					}
-
-					fetchData("day");
+							.catch((error) => {
+								console.log("Error:", error);
+								formErrorMessage.classList.remove("hidden");
+								formMessage.classList.add("hidden");
+								formErrorMessage.textContent = "Error adding data!";
+							});
+					});
+				} else {
+					console.error("Add Data form not found");
 				}
 
-				function setupHeartRatePage() {
-					console.log("Setting up Heart Rate Page");
+				function fetchData(view) {
+					console.log("Fetching data for view:", view);
+					fetch(`{{ url_for('main.heart_rate_data') }}?view=${view}`)
+						.then((response) => response.json())
+						.then((data) => {
+							console.log("Data fetched:", data);
+							updateChart(data);
+						})
+						.catch((error) => console.error("Error fetching data:", error));
+				}
 
-					const addDataButton = document.getElementById("addDataButton");
-					const addDataModal = document.getElementById("addDataModal");
-					const closeModalButton = document.getElementById("closeModalButton");
-					const closeModalButtonTop = document.getElementById(
-						"closeModalButtonTop"
-					);
-					const addDataForm = document.getElementById("addDataForm");
-					const formMessage = document.getElementById("formMessage");
-					const formErrorMessage = document.getElementById("formErrorMessage");
-					const dayViewButton = document.getElementById("dayView");
-					const weekViewButton = document.getElementById("weekView");
-					const monthViewButton = document.getElementById("monthView");
-
-					let hrChart;
-
-					if (addDataButton) {
-						addDataButton.addEventListener("click", function () {
-							console.log("Add Data button clicked");
-							addDataModal.classList.remove("hidden");
-							console.log("Modal should be visible now");
-						});
-					} else {
-						console.error("Add Data button not found");
+				function updateChart(data) {
+					console.log("Updating chart with data:", data);
+					const ctx = document.getElementById("hrChart").getContext("2d");
+					if (hrChart) {
+						hrChart.destroy();
 					}
+					hrChart = new Chart(ctx, {
+						type: "line",
+						data: {
+							datasets: [
+								{
+									label: "Heart Rate",
+									data: data.map((entry) => ({
+										x: moment(entry.timestamp),
+										y: entry.heart_rate,
+									})),
+									borderColor: "rgb(255, 99, 132)",
+									fill: false,
+								},
+							],
+						},
+						options: {
+							scales: {
+								x: {
+									type: "time",
+									time: {
+										unit: "day",
+									},
+								},
+								y: {
+									beginAtZero: false,
+								},
+							},
+						},
+					});
+				}
 
-					if (closeModalButton) {
-						closeModalButton.addEventListener("click", function () {
-							console.log("Close button clicked");
-							addDataModal.classList.add("hidden");
-						});
-					} else {
-						console.error("Close button not found");
-					}
+				if (dayViewButton) {
+					dayViewButton.addEventListener("click", () => fetchData("day"));
+				} else {
+					console.error("Day view button not found");
+				}
 
-					if (closeModalButtonTop) {
-						closeModalButtonTop.addEventListener("click", function () {
-							console.log("Close button (top) clicked");
-							addDataModal.classList.add("hidden");
-						});
-					} else {
-						console.error("Close button (top) not found");
-					}
+				if (weekViewButton) {
+					weekViewButton.addEventListener("click", () => fetchData("week"));
+				} else {
+					console.error("Week view button not found");
+				}
 
-					if (addDataForm) {
-						addDataForm.addEventListener("submit", function (event) {
-							event.preventDefault();
-							console.log("Form submitted");
-							const formData = new FormData(addDataForm);
+				if (monthViewButton) {
+					monthViewButton.addEventListener("click", () => fetchData("month"));
+				} else {
+					console.error("Month view button not found");
+				}
 
-							fetch(addDataForm.action, {
-								method: "POST",
-								body: formData,
-							})
-								.then((response) => response.json())
-								.then((data) => {
-									if (data.success) {
-										console.log("Data added successfully");
-										formMessage.classList.remove("hidden");
-										formErrorMessage.classList.add("hidden");
-										formMessage.textContent = "Data added successfully!";
-										setTimeout(() => {
-											formMessage.classList.add("hidden");
-											addDataModal.classList.add("hidden");
-											fetchData("day");
-										}, 2000);
-									} else {
-										console.log("Error adding data");
-										formErrorMessage.classList.remove("hidden");
+				fetchData("day");
+			}
+
+			function setupGlucosePage() {
+				console.log("Setting up Glucose Page");
+
+				const addDataButton = document.getElementById("addDataButton");
+				const addDataModal = document.getElementById("addDataModal");
+				const closeModalButton = document.getElementById("closeModalButton");
+				const closeModalButtonTop = document.getElementById(
+					"closeModalButtonTop"
+				);
+				const addDataForm = document.getElementById("addDataForm");
+				const formMessage = document.getElementById("formMessage");
+				const formErrorMessage = document.getElementById("formErrorMessage");
+				const dayViewButton = document.getElementById("dayView");
+				const weekViewButton = document.getElementById("weekView");
+				const monthViewButton = document.getElementById("monthView");
+
+				let glucoseChart;
+
+				if (addDataButton) {
+					addDataButton.addEventListener("click", function () {
+						console.log("Add Data button clicked");
+						addDataModal.classList.remove("hidden");
+						console.log("Modal should be visible now");
+					});
+				} else {
+					console.error("Add Data button not found");
+				}
+
+				if (closeModalButton) {
+					closeModalButton.addEventListener("click", function () {
+						console.log("Close button clicked");
+						addDataModal.classList.add("hidden");
+					});
+				} else {
+					console.error("Close button not found");
+				}
+
+				if (closeModalButtonTop) {
+					closeModalButtonTop.addEventListener("click", function () {
+						console.log("Close button (top) clicked");
+						addDataModal.classList.add("hidden");
+					});
+				} else {
+					console.error("Close button (top) not found");
+				}
+
+				if (addDataForm) {
+					addDataForm.addEventListener("submit", function (event) {
+						event.preventDefault();
+						console.log("Form submitted");
+						const formData = new FormData(addDataForm);
+
+						fetch(addDataForm.action, {
+							method: "POST",
+							body: formData,
+						})
+							.then((response) => response.json())
+							.then((data) => {
+								if (data.success) {
+									console.log("Data added successfully");
+									formMessage.classList.remove("hidden");
+									formErrorMessage.classList.add("hidden");
+									formMessage.textContent = "Data added successfully!";
+									setTimeout(() => {
 										formMessage.classList.add("hidden");
-										formErrorMessage.textContent = "Error adding data!";
-									}
-								})
-								.catch((error) => {
-									console.log("Error:", error);
+										addDataModal.classList.add("hidden");
+										fetchData("day");
+									}, 2000);
+								} else {
+									console.log("Error adding data");
 									formErrorMessage.classList.remove("hidden");
 									formMessage.classList.add("hidden");
 									formErrorMessage.textContent = "Error adding data!";
-								});
-						});
-					} else {
-						console.error("Add Data form not found");
-					}
-
-					function fetchData(view) {
-						console.log("Fetching data for view:", view);
-						fetch(`{{ url_for('main.heart_rate_data') }}?view=${view}`)
-							.then((response) => response.json())
-							.then((data) => {
-								console.log("Data fetched:", data);
-								updateChart(data);
+								}
 							})
-							.catch((error) => console.error("Error fetching data:", error));
-					}
-
-					function updateChart(data) {
-						console.log("Updating chart with data:", data);
-						const ctx = document.getElementById("hrChart").getContext("2d");
-						if (hrChart) {
-							hrChart.destroy();
-						}
-						hrChart = new Chart(ctx, {
-							type: "line",
-							data: {
-								datasets: [
-									{
-										label: "Heart Rate",
-										data: data.map((entry) => ({
-											x: moment(entry.timestamp),
-											y: entry.heart_rate,
-										})),
-										borderColor: "rgb(255, 99, 132)",
-										fill: false,
-									},
-								],
-							},
-							options: {
-								scales: {
-									x: {
-										type: "time",
-										time: {
-											unit: "day",
-										},
-									},
-									y: {
-										beginAtZero: false,
-									},
-								},
-							},
-						});
-					}
-
-					if (dayViewButton) {
-						dayViewButton.addEventListener("click", () => fetchData("day"));
-					} else {
-						console.error("Day view button not found");
-					}
-
-					if (weekViewButton) {
-						weekViewButton.addEventListener("click", () => fetchData("week"));
-					} else {
-						console.error("Week view button not found");
-					}
-
-					if (monthViewButton) {
-						monthViewButton.addEventListener("click", () => fetchData("month"));
-					} else {
-						console.error("Month view button not found");
-					}
-
-					fetchData("day");
+							.catch((error) => {
+								console.log("Error:", error);
+								formErrorMessage.classList.remove("hidden");
+								formMessage.classList.add("hidden");
+								formErrorMessage.textContent = "Error adding data!";
+							});
+					});
+				} else {
+					console.error("Add Data form not found");
 				}
 
-				function setupGlucosePage() {
-					console.log("Setting up Glucose Page");
-
-					const addDataButton = document.getElementById("addDataButton");
-					const addDataModal = document.getElementById("addDataModal");
-					const closeModalButton = document.getElementById("closeModalButton");
-					const closeModalButtonTop = document.getElementById(
-						"closeModalButtonTop"
-					);
-					const addDataForm = document.getElementById("addDataForm");
-					const formMessage = document.getElementById("formMessage");
-					const formErrorMessage = document.getElementById("formErrorMessage");
-					const dayViewButton = document.getElementById("dayView");
-					const weekViewButton = document.getElementById("weekView");
-					const monthViewButton = document.getElementById("monthView");
-
-					let glucoseChart;
-
-					if (addDataButton) {
-						addDataButton.addEventListener("click", function () {
-							console.log("Add Data button clicked");
-							addDataModal.classList.remove("hidden");
-							console.log("Modal should be visible now");
-						});
-					} else {
-						console.error("Add Data button not found");
-					}
-
-					if (closeModalButton) {
-						closeModalButton.addEventListener("click", function () {
-							console.log("Close button clicked");
-							addDataModal.classList.add("hidden");
-						});
-					} else {
-						console.error("Close button not found");
-					}
-
-					if (closeModalButtonTop) {
-						closeModalButtonTop.addEventListener("click", function () {
-							console.log("Close button (top) clicked");
-							addDataModal.classList.add("hidden");
-						});
-					} else {
-						console.error("Close button (top) not found");
-					}
-
-					if (addDataForm) {
-						addDataForm.addEventListener("submit", function (event) {
-							event.preventDefault();
-							console.log("Form submitted");
-							const formData = new FormData(addDataForm);
-
-							fetch(addDataForm.action, {
-								method: "POST",
-								body: formData,
-							})
-								.then((response) => response.json())
-								.then((data) => {
-									if (data.success) {
-										console.log("Data added successfully");
-										formMessage.classList.remove("hidden");
-										formErrorMessage.classList.add("hidden");
-										formMessage.textContent = "Data added successfully!";
-										setTimeout(() => {
-											formMessage.classList.add("hidden");
-											addDataModal.classList.add("hidden");
-											fetchData("day");
-										}, 2000);
-									} else {
-										console.log("Error adding data");
-										formErrorMessage.classList.remove("hidden");
-										formMessage.classList.add("hidden");
-										formErrorMessage.textContent = "Error adding data!";
-									}
-								})
-								.catch((error) => {
-									console.log("Error:", error);
-									formErrorMessage.classList.remove("hidden");
-									formMessage.classList.add("hidden");
-									formErrorMessage.textContent = "Error adding data!";
-								});
-						});
-					} else {
-						console.error("Add Data form not found");
-					}
-
-					function fetchData(view) {
-						console.log("Fetching data for view:", view);
-						fetch(`{{ url_for('main.glucose_data') }}?view=${view}`)
-							.then((response) => response.json())
-							.then((data) => {
-								console.log("Data fetched:", data);
-								updateChart(data);
-							})
-							.catch((error) => console.error("Error fetching data:", error));
-					}
-
-					function updateChart(data) {
-						console.log("Updating chart with data:", data);
-						const ctx = document
-							.getElementById("glucoseChart")
-							.getContext("2d");
-						if (glucoseChart) {
-							glucoseChart.destroy();
-						}
-						glucoseChart = new Chart(ctx, {
-							type: "line",
-							data: {
-								datasets: [
-									{
-										label: "Glucose Level",
-										data: data.map((entry) => ({
-											x: moment(entry.timestamp),
-											y: entry.glucose_level,
-										})),
-										borderColor: "rgb(255, 99, 132)",
-										fill: false,
-									},
-								],
-							},
-							options: {
-								scales: {
-									x: {
-										type: "time",
-										time: {
-											unit: "day",
-										},
-									},
-									y: {
-										beginAtZero: false,
-									},
-								},
-							},
-						});
-					}
-
-					if (dayViewButton) {
-						dayViewButton.addEventListener("click", () => fetchData("day"));
-					} else {
-						console.error("Day view button not found");
-					}
-
-					if (weekViewButton) {
-						weekViewButton.addEventListener("click", () => fetchData("week"));
-					} else {
-						console.error("Week view button not found");
-					}
-
-					if (monthViewButton) {
-						monthViewButton.addEventListener("click", () => fetchData("month"));
-					} else {
-						console.error("Month view button not found");
-					}
-
-					fetchData("day");
+				function fetchData(view) {
+					console.log("Fetching data for view:", view);
+					fetch(`{{ url_for('main.glucose_data') }}?view=${view}`)
+						.then((response) => response.json())
+						.then((data) => {
+							console.log("Data fetched:", data);
+							updateChart(data);
+						})
+						.catch((error) => console.error("Error fetching data:", error));
 				}
 
-				icons.forEach((icon) => {
-					icon.addEventListener("click", function () {
-						const tabId = this.getAttribute("data-tab");
-						activateTab(tabId);
+				function updateChart(data) {
+					console.log("Updating chart with data:", data);
+					const ctx = document.getElementById("glucoseChart").getContext("2d");
+					if (glucoseChart) {
+						glucoseChart.destroy();
+					}
+					glucoseChart = new Chart(ctx, {
+						type: "line",
+						data: {
+							datasets: [
+								{
+									label: "Glucose Level",
+									data: data.map((entry) => ({
+										x: moment(entry.timestamp),
+										y: entry.glucose_level,
+									})),
+									borderColor: "rgb(255, 99, 132)",
+									fill: false,
+								},
+							],
+						},
+						options: {
+							scales: {
+								x: {
+									type: "time",
+									time: {
+										unit: "day",
+									},
+								},
+								y: {
+									beginAtZero: false,
+								},
+							},
+						},
+					});
+				}
+
+				if (dayViewButton) {
+					dayViewButton.addEventListener("click", () => fetchData("day"));
+				} else {
+					console.error("Day view button not found");
+				}
+
+				if (weekViewButton) {
+					weekViewButton.addEventListener("click", () => fetchData("week"));
+				} else {
+					console.error("Week view button not found");
+				}
+
+				if (monthViewButton) {
+					monthViewButton.addEventListener("click", () => fetchData("month"));
+				} else {
+					console.error("Month view button not found");
+				}
+
+				fetchData("day");
+			}
+
+			icons.forEach((icon) => {
+				icon.addEventListener("click", function () {
+					const tabId = this.getAttribute("data-tab");
+					activateTab(tabId);
+				});
+			});
+
+			function summaryPage() {
+				// Modal Buttons
+				const addBPButton = document.getElementById("addBP");
+				const addCholesterolButton = document.getElementById("addCholesterol");
+				const addGlucoseButton = document.getElementById("addGlucose");
+				const addHeartRateButton = document.getElementById("addHeartRate");
+
+				// Modals
+				const addBPModal = document.getElementById("addBPModal");
+				const addCholesterolModal = document.getElementById(
+					"addCholesterolModal"
+				);
+				const addGlucoseModal = document.getElementById("addGlucoseModal");
+				const addHeartRateModal = document.getElementById("addHeartRateModal");
+
+				// Modal Close Buttons
+				const closeBPModalButton =
+					document.getElementById("closeBPModalButton");
+				const closeBPModalButtonTop = document.getElementById(
+					"closeBPModalButtonTop"
+				);
+				const closeCholesterolModalButton = document.getElementById(
+					"closeCholesterolModalButton"
+				);
+				const closeCholesterolModalButtonTop = document.getElementById(
+					"closeCholesterolModalButtonTop"
+				);
+				const closeGlucoseModalButton = document.getElementById(
+					"closeGlucoseModalButton"
+				);
+				const closeGlucoseModalButtonTop = document.getElementById(
+					"closeGlucoseModalButtonTop"
+				);
+				const closeHeartRateModalButton = document.getElementById(
+					"closeHeartRateModalButton"
+				);
+				const closeHeartRateModalButtonTop = document.getElementById(
+					"closeHeartRateModalButtonTop"
+				);
+
+				// Forms
+				const bpForm = document.getElementById("addBPForm");
+				const cholesterolForm = document.getElementById("addCholesterolForm");
+				const glucoseForm = document.getElementById("addGlucoseForm");
+				const heartRateForm = document.getElementById("addHeartRateForm");
+
+				// Messages
+				const bpFormMessage = document.getElementById("bpFormMessage");
+				const bpFormErrorMessage =
+					document.getElementById("bpFormErrorMessage");
+				const cholesterolFormMessage = document.getElementById(
+					"cholesterolFormMessage"
+				);
+				const cholesterolFormErrorMessage = document.getElementById(
+					"cholesterolFormErrorMessage"
+				);
+				const glucoseFormMessage =
+					document.getElementById("glucoseFormMessage");
+				const glucoseFormErrorMessage = document.getElementById(
+					"glucoseFormErrorMessage"
+				);
+				const heartRateFormMessage = document.getElementById(
+					"heartRateFormMessage"
+				);
+				const heartRateFormErrorMessage = document.getElementById(
+					"heartRateFormErrorMessage"
+				);
+
+				// Show BP Modal
+				addBPButton.addEventListener("click", function () {
+					addBPModal.classList.remove("hidden");
+					addCholesterolModal.classList.add("hidden");
+					addGlucoseModal.classList.add("hidden");
+					addHeartRateModal.classList.add("hidden");
+				});
+
+				// Show Cholesterol Modal
+				addCholesterolButton.addEventListener("click", function () {
+					addCholesterolModal.classList.remove("hidden");
+					addBPModal.classList.add("hidden");
+					addGlucoseModal.classList.add("hidden");
+					addHeartRateModal.classList.add("hidden");
+				});
+
+				// Show Glucose Modal
+				addGlucoseButton.addEventListener("click", function () {
+					addGlucoseModal.classList.remove("hidden");
+					addBPModal.classList.add("hidden");
+					addCholesterolModal.classList.add("hidden");
+					addHeartRateModal.classList.add("hidden");
+				});
+
+				// Show Heart Rate Modal
+				addHeartRateButton.addEventListener("click", function () {
+					addHeartRateModal.classList.remove("hidden");
+					addBPModal.classList.add("hidden");
+					addCholesterolModal.classList.add("hidden");
+					addGlucoseModal.classList.add("hidden");
+				});
+
+				// Close BP Modal
+				[closeBPModalButton, closeBPModalButtonTop].forEach((button) => {
+					button.addEventListener("click", function () {
+						addBPModal.classList.add("hidden");
 					});
 				});
 
-				const activeTab = localStorage.getItem("activeTab") || "explore";
-				activateTab(activeTab, false);
-				loadContent(activeTab, setActiveIcon);
-			});
+				// Close Cholesterol Modal
+				[closeCholesterolModalButton, closeCholesterolModalButtonTop].forEach(
+					(button) => {
+						button.addEventListener("click", function () {
+							addCholesterolModal.classList.add("hidden");
+						});
+					}
+				);
+
+				// Close Glucose Modal
+				[closeGlucoseModalButton, closeGlucoseModalButtonTop].forEach(
+					(button) => {
+						button.addEventListener("click", function () {
+							addGlucoseModal.classList.add("hidden");
+						});
+					}
+				);
+
+				// Close Heart Rate Modal
+				[closeHeartRateModalButton, closeHeartRateModalButtonTop].forEach(
+					(button) => {
+						button.addEventListener("click", function () {
+							addHeartRateModal.classList.add("hidden");
+						});
+					}
+				);
+
+				// Handle BP Form Submission
+				bpForm.addEventListener("submit", function (event) {
+					event.preventDefault();
+					const formData = new FormData(bpForm);
+					fetch(bpForm.action, {
+						method: "POST",
+						body: formData,
+					})
+						.then((response) => {
+							if (response.ok) {
+								bpFormMessage.classList.remove("hidden");
+								bpFormErrorMessage.classList.add("hidden");
+								bpForm.reset(); // Clear form after success
+							} else {
+								bpFormErrorMessage.classList.remove("hidden");
+								bpFormMessage.classList.add("hidden");
+							}
+						})
+						.catch(() => {
+							bpFormErrorMessage.classList.remove("hidden");
+							bpFormMessage.classList.add("hidden");
+						});
+				});
+
+				// Handle Cholesterol Form Submission
+				cholesterolForm.addEventListener("submit", function (event) {
+					event.preventDefault();
+					const formData = new FormData(cholesterolForm);
+					fetch(cholesterolForm.action, {
+						method: "POST",
+						body: formData,
+					})
+						.then((response) => {
+							if (response.ok) {
+								cholesterolFormMessage.classList.remove("hidden");
+								cholesterolFormErrorMessage.classList.add("hidden");
+								cholesterolForm.reset(); // Clear form after success
+							} else {
+								cholesterolFormErrorMessage.classList.remove("hidden");
+								cholesterolFormMessage.classList.add("hidden");
+							}
+						})
+						.catch(() => {
+							cholesterolFormErrorMessage.classList.remove("hidden");
+							cholesterolFormMessage.classList.add("hidden");
+						});
+				});
+
+				// Handle Glucose Form Submission
+				glucoseForm.addEventListener("submit", function (event) {
+					event.preventDefault();
+					const formData = new FormData(glucoseForm);
+					fetch(glucoseForm.action, {
+						method: "POST",
+						body: formData,
+					})
+						.then((response) => {
+							if (response.ok) {
+								glucoseFormMessage.classList.remove("hidden");
+								glucoseFormErrorMessage.classList.add("hidden");
+								glucoseForm.reset(); // Clear form after success
+							} else {
+								glucoseFormErrorMessage.classList.remove("hidden");
+								glucoseFormMessage.classList.add("hidden");
+							}
+						})
+						.catch(() => {
+							glucoseFormErrorMessage.classList.remove("hidden");
+							glucoseFormMessage.classList.add("hidden");
+						});
+				});
+
+				// Handle Heart Rate Form Submission
+				heartRateForm.addEventListener("submit", function (event) {
+					event.preventDefault();
+					const formData = new FormData(heartRateForm);
+					fetch(heartRateForm.action, {
+						method: "POST",
+						body: formData,
+					})
+						.then((response) => {
+							if (response.ok) {
+								heartRateFormMessage.classList.remove("hidden");
+								heartRateFormErrorMessage.classList.add("hidden");
+								heartRateForm.reset(); // Clear form after success
+							} else {
+								heartRateFormErrorMessage.classList.remove("hidden");
+								heartRateFormMessage.classList.add("hidden");
+							}
+						})
+						.catch(() => {
+							heartRateFormErrorMessage.classList.remove("hidden");
+							heartRateFormMessage.classList.add("hidden");
+						});
+				});
+			}
+
+			const activeTab = localStorage.getItem("activeTab") || "explore";
+			activateTab(activeTab, false);
+			loadContent(activeTab, setActiveIcon);
 		</script>
 	</body>
 </html>

@@ -19,12 +19,18 @@ def index():
 @main.route('/summary')
 @login_required
 def summary():
-    form = BloodPressureForm()
+    bp_form = BloodPressureForm()
+    cholesterol_form = CholesterolForm()
+    glucose_form = GlucoseForm()
+    heart_rate_form = HeartRateForm()
     bp_data = BloodPressure.query.filter_by(user_id=current_user.id).all()
     cholesterol_data = Cholesterol.query.filter_by(user_id=current_user.id).all()
     heart_rate_data = HeartRate.query.filter_by(user_id=current_user.id).all()
     glucose_data = Glucose.query.filter_by(user_id=current_user.id).all()
-    return render_template('summary_content.html', form=form, bp_data=bp_data, cholesterol_data=cholesterol_data, heart_rate_data=heart_rate_data, glucose_data=glucose_data)
+    return render_template('summary_content.html', bp_form=bp_form, cholesterol_form=cholesterol_form, glucose_form=glucose_form, heart_rate_form=heart_rate_form, bp_data=bp_data, cholesterol_data=cholesterol_data, heart_rate_data=heart_rate_data, glucose_data=glucose_data)
+
+
+
 
 
 @main.route('/profile')
