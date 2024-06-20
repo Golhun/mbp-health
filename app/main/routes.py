@@ -23,13 +23,32 @@ def summary():
     cholesterol_form = CholesterolForm()
     glucose_form = GlucoseForm()
     heart_rate_form = HeartRateForm()
+    
+    # Fetch and format data
     bp_data = BloodPressure.query.filter_by(user_id=current_user.id).all()
     cholesterol_data = Cholesterol.query.filter_by(user_id=current_user.id).all()
     heart_rate_data = HeartRate.query.filter_by(user_id=current_user.id).all()
     glucose_data = Glucose.query.filter_by(user_id=current_user.id).all()
-    return render_template('summary_content.html', bp_form=bp_form, cholesterol_form=cholesterol_form, glucose_form=glucose_form, heart_rate_form=heart_rate_form, bp_data=bp_data, cholesterol_data=cholesterol_data, heart_rate_data=heart_rate_data, glucose_data=glucose_data)
-
-
+    
+    # Format data for the chart
+    bp_chart_data = [{'timestamp': bp.timestamp.strftime('%Y-%m-%d'), 'systolic': bp.systolic, 'diastolic': bp.diastolic} for bp in bp_data] if bp_data else None
+    cholesterol_chart_data = [{'timestamp': c.timestamp.strftime('%Y-%m-%d'), 'cholesterol_level': c.cholesterol_level} for c in cholesterol_data] if cholesterol_data else None
+    heart_rate_chart_data = [{'timestamp': hr.timestamp.strftime('%Y-%m-%d'), 'heart_rate': hr.heart_rate} for hr in heart_rate_data] if heart_rate_data else None
+    glucose_chart_data = [{'timestamp': g.timestamp.strftime('%Y-%m-%d'), 'glucose_level': g.glucose_level} for g in glucose_data] if glucose_data else None
+    
+    return render_template('summary_content.html', 
+                           bp_form=bp_form, 
+                           cholesterol_form=cholesterol_form, 
+                           glucose_form=glucose_form, 
+                           heart_rate_form=heart_rate_form, 
+                           bp_data=bp_data, 
+                           cholesterol_data=cholesterol_data, 
+                           heart_rate_data=heart_rate_data, 
+                           glucose_data=glucose_data,
+                           bp_chart_data=bp_chart_data,
+                           cholesterol_chart_data=cholesterol_chart_data,
+                           heart_rate_chart_data=heart_rate_chart_data,
+                           glucose_chart_data=glucose_chart_data)
 
 
 
@@ -57,7 +76,24 @@ def explore_content():
 @login_required
 def dashboard():
     form = ProfileForm()
-    return render_template('dashboard.html', form=form)
+    # Fetch data from the database
+    bp_data = BloodPressure.query.filter_by(user_id=current_user.id).all() or []
+    cholesterol_data = Cholesterol.query.filter_by(user_id=current_user.id).all() or []
+    heart_rate_data = HeartRate.query.filter_by(user_id=current_user.id).all() or []
+    glucose_data = Glucose.query.filter_by(user_id=current_user.id).all() or []
+
+    # Format data for the chart
+    bp_chart_data = [{'timestamp': bp.timestamp.strftime('%Y-%m-%d'), 'systolic': bp.systolic, 'diastolic': bp.diastolic} for bp in bp_data]
+    cholesterol_chart_data = [{'timestamp': c.timestamp.strftime('%Y-%m-%d'), 'cholesterol_level': c.cholesterol_level} for c in cholesterol_data]
+    heart_rate_chart_data = [{'timestamp': hr.timestamp.strftime('%Y-%m-%d'), 'heart_rate': hr.heart_rate} for hr in heart_rate_data]
+    glucose_chart_data = [{'timestamp': g.timestamp.strftime('%Y-%m-%d'), 'glucose_level': g.glucose_level} for g in glucose_data]
+
+    return render_template('dashboard.html',
+                           form=form,
+                           bp_chart_data=bp_chart_data,
+                           cholesterol_chart_data=cholesterol_chart_data,
+                           heart_rate_chart_data=heart_rate_chart_data,
+                           glucose_chart_data=glucose_chart_data)
 
 @main.route('/edit_profile_page')
 @login_required
