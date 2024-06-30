@@ -90,26 +90,35 @@
                 </div>
             {% endif %}
         </div>
-        <aside class="lg:w-1/4 bg-white rounded-lg shadow-sm sm:shadow-lg p-4 sm:p-6 mt-6 lg:mt-0 lg:ml-6">
-            <h2 class="text-lg font-semibold mb-4">Notifications</h2>
-            <div class="space-y-4">
-                <div class="bg-yellow-100 p-4 rounded-lg flex items-center">
-                    <i class="fas fa-exclamation-circle text-yellow-500 text-lg"></i>
-                    <div class="ml-4">
-                        <p class="text-sm">You've added new project recently, with no deadline.</p>
+        <aside class="lg:w-1/4 space-y-6 mt-6 lg:mt-0 lg:ml-6">
+            <div class="bg-white rounded-lg shadow-sm sm:shadow-lg p-4 sm:p-6">
+                <h2 class="text-lg font-semibold mb-4">Notifications</h2>
+                <div class="space-y-4">
+                    <div class="bg-yellow-100 p-4 rounded-lg flex items-center">
+                        <i class="fas fa-exclamation-circle text-yellow-500 text-lg"></i>
+                        <div class="ml-4">
+                            <p class="text-sm">You've added new project recently, with no deadline.</p>
+                        </div>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded-lg flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-lg"></i>
+                        <div class="ml-4">
+                            <p class="text-sm">Project owner Adam requested a refund.</p>
+                        </div>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-lg flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 text-lg"></i>
+                        <div class="ml-4">
+                            <p class="text-sm">Today, it's Tata's anniversary! Wish her happy birthday!</p>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-red-100 p-4 rounded-lg flex items-center">
-                    <i class="fas fa-exclamation-triangle text-red-500 text-lg"></i>
-                    <div class="ml-4">
-                        <p class="text-sm">Project owner Adam requested a refund.</p>
-                    </div>
-                </div>
-                <div class="bg-blue-100 p-4 rounded-lg flex items-center">
-                    <i class="fas fa-info-circle text-blue-500 text-lg"></i>
-                    <div class="ml-4">
-                        <p class="text-sm">Today, it's Tata's anniversary! Wish her happy birthday!</p>
-                    </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm sm:shadow-lg p-4 sm:p-6">
+                <h2 class="text-lg font-semibold mb-4">Health Analysis</h2>
+                <div id="health-analysis-message" class="hidden text-center text-lg"></div>
+                <div id="health-analysis" class="space-y-4">
+                    <!-- Content will be dynamically loaded here -->
                 </div>
             </div>
         </aside>

@@ -1090,8 +1090,16 @@
 				document.getElementById('current-date').textContent = currentDate;
 
 
-			// Call the function with the data from Flask
+			// Health trend graph function
 			healthTrend(
+				{{ bp_chart_data|tojson }},
+				{{ cholesterol_chart_data|tojson }},
+				{{ heart_rate_chart_data|tojson }},
+				{{ glucose_chart_data|tojson }}
+			);
+
+			// Health trend analyze function
+			analyzeHealth(
 				{{ bp_chart_data|tojson }},
 				{{ cholesterol_chart_data|tojson }},
 				{{ heart_rate_chart_data|tojson }},
@@ -1208,6 +1216,83 @@
 							}
 						}
 					});
+				}
+			}
+
+
+			function analyzeHealth(bpData, cholesterolData, heartRateData, glucoseData) {
+				const analysisElement = document.getElementById("health-analysis");
+				const messageElement = document.getElementById("health-analysis-message");
+
+				analysisElement.innerHTML = '';
+				messageElement.classList.add("hidden");
+
+				let dataAvailable = false;
+
+				function calculateAverage(data, key) {
+					const sum = data.reduce((total, item) => total + item[key], 0);
+					return (sum / data.length).toFixed(2);
+				}
+
+				function checkTrend(data, key) {
+					if (data.length < 5) return 'Not enough data for trend analysis';
+					const first = data[0][key];
+					const last = data[data.length - 1][key];
+					if (last > first) return 'rising';
+					if (last < first) return 'falling';
+					return 'stable';
+				}
+
+				function createAnalysisCard(title, value, trend, statusColor) {
+					return `
+						<div class="bg-${statusColor}-100 p-4 rounded-lg flex items-center">
+							<i class="fas fa-chart-line text-${statusColor}-500 text-lg"></i>
+							<div class="ml-4">
+								<p class="text-sm">${title}: ${value}</p>
+								<p class="text-xs">Trend: ${trend}</p>
+							</div>
+						</div>
+					`;
+				}
+
+				if (bpData && bpData.length > 0) {
+					dataAvailable = true;
+					const avgSystolic = calculateAverage(bpData, 'systolic');
+					const avgDiastolic = calculateAverage(bpData, 'diastolic');
+					const bpTrend = checkTrend(bpData, 'systolic');
+					const statusColor = bpTrend === 'rising' ? 'red' : 'green';
+					analysisElement.innerHTML += createAnalysisCard('Average Blood Pressure', `${avgSystolic}/${avgDiastolic} mmHg`, bpTrend, statusColor);
+				}
+
+				if (cholesterolData && cholesterolData.length > 0) {
+					dataAvailable = true;
+					const avgCholesterol = calculateAverage(cholesterolData, 'cholesterol_level');
+					const cholesterolTrend = checkTrend(cholesterolData, 'cholesterol_level');
+					const statusColor = cholesterolTrend === 'rising' ? 'red' : 'green';
+					analysisElement.innerHTML += createAnalysisCard('Average Cholesterol Level', `${avgCholesterol} mg/dL`, cholesterolTrend, statusColor);
+				}
+
+				if (heartRateData && heartRateData.length > 0) {
+					dataAvailable = true;
+					const avgHeartRate = calculateAverage(heartRateData, 'heart_rate');
+					const heartRateTrend = checkTrend(heartRateData, 'heart_rate');
+					const statusColor = heartRateTrend === 'rising' ? 'red' : 'green';
+					analysisElement.innerHTML += createAnalysisCard('Average Heart Rate', `${avgHeartRate} bpm`, heartRateTrend, statusColor);
+				}
+
+				if (glucoseData && glucoseData.length > 0) {
+					dataAvailable = true;
+					const avgGlucose = calculateAverage(glucoseData, 'glucose_level');
+					const glucoseTrend = checkTrend(glucoseData, 'glucose_level');
+					const statusColor = glucoseTrend === 'rising' ? 'red' : 'green';
+					analysisElement.innerHTML += createAnalysisCard('Average Glucose Level', `${avgGlucose} mg/dL`, glucoseTrend, statusColor);
+				}
+
+				if (!dataAvailable) {
+					messageElement.textContent = "Not enough data available to provide a health analysis.";
+					messageElement.classList.remove("hidden");
+				} else {
+					messageElement.classList.add("hidden");
 				}
 			}
 		</script>
