@@ -3,7 +3,7 @@ from . import auth
 from app import db, bcrypt
 from app.models import User
 from flask_login import login_user, logout_user, login_required, current_user
-from app.forms import SignUpForm, SignInForm, RequestResetForm, ResetPasswordForm
+from app.forms import SignUpForm, SignInForm, RequestResetForm, ResetPasswordForm, LogoutForm
 from app.utils import send_reset_email
 
 @auth.route('/sign_up', methods=['GET', 'POST'])
@@ -44,12 +44,16 @@ def sign_in():
 
     return render_template('sign_in.html', form=form)
 
-@auth.route('/sign_out')
+@auth.route('/sign_out', methods=['POST'])
 @login_required
 def sign_out():
-    logout_user()
-    flash('You have been signed out.', 'info')
-    return redirect(url_for('auth.sign_in'))
+    form = LogoutForm()
+    if form.validate_on_submit():
+        logout_user()
+        flash('You have been signed out.', 'info')
+        return redirect(url_for('auth.sign_in'))
+    flash('Invalid request.', 'error')
+    return redirect(url_for('main.index'))
 
 @auth.route('/reset_password', methods=['GET', 'POST'])
 def request_reset():

@@ -62,3 +62,6 @@ class CholesterolForm(FlaskForm):
 class GlucoseForm(FlaskForm):
     glucose_level = DecimalField('Glucose Level', validators=[DataRequired()])
     submit = SubmitField('Add Data')
+
+class LogoutForm(FlaskForm):
+    pass

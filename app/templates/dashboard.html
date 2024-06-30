@@ -44,6 +44,35 @@
 				display: block;
 				opacity: 1;
 			}
+			@media (max-width: 767px) {
+				.logout-button {
+					display: none;
+				}
+			}
+			.tooltip {
+				position: relative;
+				display: inline-block;
+			}
+			.tooltip .tooltiptext {
+				visibility: hidden;
+				width: 80px;
+				background-color: #f56565;
+				color: #fff;
+				text-align: center;
+				border-radius: 6px;
+				padding: 5px 0;
+				position: absolute;
+				z-index: 1;
+				bottom: 125%; /* Position above the icon */
+				left: 50%;
+				margin-left: -40px;
+				opacity: 0;
+				transition: opacity 0.3s;
+			}
+			.tooltip:hover .tooltiptext {
+				visibility: visible;
+				opacity: 1;
+			}
 		</style>
 	</head>
 	<body class="flex h-screen bg-gray-100">
@@ -53,9 +82,9 @@
 				class="bg-white md:w-16 w-full md:h-full h-16 fixed md:fixed bottom-0 md:bottom-auto flex md:flex-col md:justify-between shadow-lg"
 			>
 				<div
-					class="flex md:flex-col items-center mobile-centered md:mt-4 space-x-4 md:space-x-0 md:space-y-4 w-full"
+					class="flex md:flex-col items-center justify-center md:mt-4 w-full space-x-4 md:space-x-0 md:space-y-4"
 				>
-					<div
+					<button
 						class="flex flex-col items-center sidebar-icon p-2"
 						id="summary-tab"
 						data-tab="summary"
@@ -64,8 +93,8 @@
 						<span class="icon-label text-gray-600 text-xs md:text-base"
 							>Summary</span
 						>
-					</div>
-					<div
+					</button>
+					<button
 						class="flex flex-col items-center sidebar-icon p-2"
 						id="profile-tab"
 						data-tab="profile"
@@ -74,8 +103,8 @@
 						<span class="icon-label text-gray-600 text-xs md:text-base"
 							>Profile</span
 						>
-					</div>
-					<div
+					</button>
+					<button
 						class="flex flex-col items-center sidebar-icon p-2"
 						id="explore-tab"
 						data-tab="explore"
@@ -84,23 +113,27 @@
 						<span class="icon-label text-gray-600 text-xs md:text-base"
 							>Explore</span
 						>
-					</div>
+					</button>
 				</div>
 				<div
-					class="md:mb-4 flex md:flex-col items-center justify-around md:justify-end space-x-4 md:space-x-0 md:space-y-4 logout-icon hidden md:flex"
+					class="md:mb-4 flex md:flex-col items-center justify-center md:justify-end space-x-4 md:space-x-0 md:space-y-4 logout-icon"
 				>
-					<div
-						class="flex flex-col items-center sidebar-icon p-2"
-						id="logout-tab"
-						onclick="location.href='{{ url_for('auth.sign_out') }}'"
+					<form
+						method="POST"
+						action="{{ url_for('auth.sign_out') }}"
+						class="hidden md:block"
 					>
-						<i
-							class="far fa-sign-out-alt text-gray-600 text-lg md:text-2xl"
-						></i>
-						<span class="icon-label text-gray-600 text-xs md:text-base"
-							>Logout</span
-						>
-					</div>
+						{{ form.hidden_tag() }}
+						<div class="tooltip">
+							<button
+								class="flex items-center justify-center p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition transform hover:scale-105 logout-button w-full md:w-auto text-sm md:text-base font-semibold"
+								type="submit"
+							>
+								<i class="fas fa-sign-out-alt text-white text-2xl"></i>
+							</button>
+							<span class="tooltiptext">Logout</span>
+						</div>
+					</form>
 				</div>
 			</nav>
 
@@ -111,7 +144,7 @@
 		</div>
 
 		<script>
-			const icons = document.querySelectorAll(".sidebar-icon");
+			const icons = document.querySelectorAll(".sidebar-icon:not(.logout-button)");
 
 			let healthTrendChart; // Declare chart variable globally
 
@@ -197,8 +230,6 @@
 					}
 				}
 			}
-
-
 
 			icons.forEach((icon) => {
 				icon.addEventListener("click", function () {
