@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 import os
 from . import main
 from app import db, bcrypt
-from app.forms import ProfileForm, BloodPressureForm, HeartRateForm, CholesterolForm, GlucoseForm
+from app.forms import ProfileForm, BloodPressureForm, HeartRateForm, CholesterolForm, GlucoseForm, LogoutForm
 from app.models import User, BloodPressure, Cholesterol, HeartRate, Glucose
 from werkzeug.security import generate_password_hash
 from PIL import Image
@@ -70,7 +70,8 @@ def profile():
 @main.route('/explore')
 @login_required
 def explore_content():
-    return render_template('explore_content.html')
+    form = LogoutForm()
+    return render_template('explore_content.html', form=form)
 
 @main.route('/dashboard')
 @login_required

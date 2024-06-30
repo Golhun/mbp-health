@@ -55,7 +55,7 @@
 			}
 			.tooltip .tooltiptext {
 				visibility: hidden;
-				width: 80px;
+				width: 60px;
 				background-color: #f56565;
 				color: #fff;
 				text-align: center;
@@ -65,7 +65,7 @@
 				z-index: 1;
 				bottom: 125%; /* Position above the icon */
 				left: 50%;
-				margin-left: -40px;
+				margin-left: -30px;
 				opacity: 0;
 				transition: opacity 0.3s;
 			}
@@ -126,10 +126,10 @@
 						{{ form.hidden_tag() }}
 						<div class="tooltip">
 							<button
-								class="flex items-center justify-center p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition transform hover:scale-105 logout-button w-full md:w-auto text-sm md:text-base font-semibold"
+								class="flex items-center justify-center p-2 text-white rounded-full transition transform hover:scale-105 logout-button w-full md:w-auto"
 								type="submit"
 							>
-								<i class="fas fa-sign-out-alt text-white text-2xl"></i>
+								<i class="fas fa-sign-out-alt text-red-700 text-2xl"></i>
 							</button>
 							<span class="tooltiptext">Logout</span>
 						</div>
